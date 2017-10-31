@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Download</title>
+	<!-- Insert this line above script imports  -->
+	<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+	<!-- normal script imports etc  -->
+	<script src="js/jquery-3.2.1.min.js"></script>
+	<script src="js/material.min.js"></script>
+	<!-- Insert this line after script imports -->
+	<script>if (window.module) module = window.module;</script>
+	<link rel="stylesheet" href="css/material.indigo-pink.min.css">
+	<link rel="stylesheet" href="css/icon.css">
+	<style>.mdl-layout__container.has-scrolling-header .mdl-layout__content {
+    overflow-x: auto;
+    overflow-x: hidden;
+}
+.mdl-layout__header--seamed, .mdl-layout__header--scroll {
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);;
+}
+.mdl-card {
+    min-height: 120px;
+}
+.mdl-layout__header-row {
+    padding: 0 16px 0 16px;
+}
+.selected {
+	background-color: #303F9F;
+}
+.mdl-card__title-text {
+	font-size: 14px;
+}
+.mdl-dialog {
+	width: 85%;
+}
+.mdl-dialog__content{
+	overflow-y:auto;
+	height:60vh;
+}
+.nav-button {
+	color: #fff;
+}
+.mdl-button[disabled][disabled], .mdl-button.mdl-button--disabled.mdl-button--disabled {
+    color: #BDBDBD;
+    cursor: default;
+    background-color: transparent;
+}
+#loading {
+	position: fixed; /* Sit on top of the page content */
+	width: 100%; /* Full width (cover the whole page) */
+	height: 100%; /* Full height (cover the whole page) */
+	background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+	z-index: 999; /* Specify a stack order in case you're using a different order for other elements */
+}
+.center-load-animation{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+}
+.listing{
+	padding: 8px;
+	vertical-align: middle;
+}
+.title-link{
+	text-decoration: none;
+}
+h2, h3 {
+    margin: 0 0;
+}
+</style>
+</head>
+<body>
+	
+	<div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+      <header class="mdl-layout__header">
+		<div class="mdl-layout__header-row">
+		<span class="mdl-layout-title">Download Overview</span>
+        </div>
+      </header>
+      <main class="mdl-layout__content">
+		<div id="content" data-columns="3" class="demo-content mdl-grid">
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet listing">Name: <span id="name">#</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet listing">Region: <span id="region">#</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet listing">titleID: <span id="titleid">################</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet listing">encTitleKey: <span id="enctitlekey">################################</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--4-col mdl-cell--12-col-tablet listing">Content(s): <span id="contentcount">#</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--4-col mdl-cell--12-col-tablet listing">Tmd status: <span id="tmd">#</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--4-col mdl-cell--12-col-tablet listing">Cetk status: <span id="cetk">#</span></div>
+			<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--12-col listing">Directory for raw files: <span id="dldir">#</span> <button id="showinfm" class="mdl-button mdl-js-button mdl-button--primary">Open directory</button><br>Directory for saving CIAs: <span id="ciadir">#</span> <button id="showinfm2" class="mdl-button mdl-js-button mdl-button--primary">Open directory</button></div>
+		</div>
+      </main>
+    </div>
+	<dialog class="mdl-dialog">
+    <div class="mdl-dialog__content">
+      <h3 id="feature"></h3>
+	  <p id="feature-info"></p>
+    </div>
+    <div class="mdl-dialog__actions">
+		<button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored close" style="background-color:#9E9E9E">Close</button>
+		<button id="apply" style="display:none;" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored download-button">Apply</button>
+    </div>
+  </dialog>
+</body>
+<script>
+// You can also require other files to run in this process
+require('./renderer-download.js');
+</script>
+</html>

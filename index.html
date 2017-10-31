@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Villain3DS</title>
+
+        <!-- Insert this line above script imports  -->
+	    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+        <!-- normal script imports etc  -->
+        <script src="js/jquery-3.2.1.min.js"></script>
+        <!-- Insert this line after script imports -->
+        <script>if (window.module) module = window.module;</script>
+        <link rel="stylesheet" href="./css/bulmaswatch-villain.css">
+		<link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+        <link rel="stylesheet" href="./css/custom.css">
+    </head>
+    <body>
+        <nav class="navmain navbar is-primary" role="navigation" aria-label="main navigation">
+            <div class="container">
+                <div style="width:100%;">
+                    <div class="navbar-brand" style="float: left;">
+                        <!--<div class="navbar-item">Villain3DS 0.9.9</div>-->
+                        <div class="navbar-item" style="font-weight:bold">Sort by</div>
+                        <a id="sort-0" class="navbar-item is-active" href="#" data-sort="0">Name</a>
+                        <a id="sort-1" class="navbar-item" href="#" data-sort="1">Recently</a>
+                        <a id="sort-2" class="navbar-item" href="#" data-sort="2">Popular</a>
+                    </div>
+                    <div class="navbar-brand" style="float:right">
+                            <div class="navbar-item" style="font-weight:bold;">
+                                <span id="current-page" style="margin-right: 3px;">###</span> of <span id="sum-page" style="margin-left: 3px;">###</span>
+                            </div>
+                        <div class="navbar-item"><a id="prev-link" class=" button is-primary" href="#" data-page="prev">Prev</a>
+                        <a id="next-link" class=" button is-primary" href="#" data-page="next">Next</a></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="main-content">
+            <nav class="navbar" role="navigation" aria-label="main navigation">
+                <div class="container">
+					<div style="width:100%;">
+						<div class="navbar-brand" style="float: left;">
+							<div class="navbar-item">
+								<form id="search-form">
+									<div class="field has-addons">
+										<div class="control">
+											<input class="input" name="keyword" type="text" placeholder="Find titles..." id="search">
+										</div>
+										<div class="control">
+											<input type="submit" class="button is-info" value="Search">
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+						<div class="navbar-brand" style="float:right">
+							<div class="navbar-item">
+								<a class="button" id="config-button"><span class="icon"><i class="ion-ios-gear ion-fw"></i></span></a>
+							
+								<a class="button" id="about-button"><span class="icon"><i class="ion-information-circled ion-fw"></i></span></a>
+							</div>
+						</div>
+					</div>
+                </div>
+            </nav>
+
+            
+            <section class="section3">
+                <div class="container">
+                    <div id="grid" data-columns="3" class="columns is-multiline is-mobile is-variable is-2 demo-content">
+                    </div>
+                </div>
+            </section>
+        </div>
+    <div class="modal modal-title">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <div class="modal-card-title"><div id="title-name">###</div></div>
+                <button class="delete dialog-close" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="tabs is-centered">
+                    <ul>
+                        <li class="info-tab is-active"><a onclick="switchToInfo()">Info</a></li>
+                        <li class="desc-tab"><a onclick="switchToDesc()">Description</a></li>
+                        <li class="src-tab"><a onclick="switchToScr()">Screenshots</a></li>
+						<li class="qr-tab"><a onclick="switchToQr()">Qrcode</a></li>
+                    </ul>
+                </div>
+                <div id="tab-content">
+                <div id="info-tab-content">
+                    <h3>Region:</h3>
+                    <p id="title-region" class="allow-select allow-drag"></p>
+                    <h3>TitleID:</h3>
+                    <p id="title-titleID" class="allow-select allow-drag"></p>
+                    <h3>Size:</h3>
+                    <p id="title-size" class="allow-select allow-drag"></p>
+                </div>
+                <p id="title-desc" class="allow-select allow-drag hidden">###</p>
+                <div id="src-tab-content" class="allow-select allow-drag hidden">
+                    <div class="columns" style="text-align:center">
+                        <div class="column">
+                            <img id="scrtop1" class="allow-select allow-drag" src="img/blank400x240.png" alt=""><br>
+                            <img id="scrbot1" class="allow-select allow-drag" src="img/blank320x240.png" style="max-width: 80%;" alt="">
+                        </div>
+                        <div class="column">
+                            <img id="scrtop2" class="allow-select allow-drag" src="img/blank400x240.png" alt=""><br>
+                            <img id="scrbot2" class="allow-select allow-drag" src="img/blank320x240.png" style="max-width: 80%;" alt="">
+                        </div>
+                        <div class="column">
+                            <img id="scrtop3" class="allow-select allow-drag" src="img/blank400x240.png" alt=""><br>
+                            <img id="scrbot3" class="allow-select allow-drag" src="img/blank320x240.png" style="max-width: 80%;" alt="">
+                        </div>
+                    </div>
+                </div>
+				<div id="qr-tab-content" style="text-align: center;" class="hidden">
+				<img id="qr-image" alt="" style="height: 100%;" />
+				</div>
+                </div>
+            </section>
+            <footer class="buttons modal-card-foot is-right">
+                <button id="download-button" data-titleID="" data-encTitleKey="" class="button is-success">Download</button>
+                <button class="button dialog-close">Close</button>
+            </footer>
+			<div class="already-downloading-notif notification is-warning bottom-notif" style="display:none;">
+				This title is already downloading.
+			</div>
+			<div class="started-downloading-notif notification is-success bottom-notif" style="display:none;">
+				Started the download process in new window.
+			</div>
+		</div>
+    </div>
+	
+	<div class="modal modal-config">
+		<div class="modal-background"></div>
+		<div class="modal-card">
+			<form id="config-form">
+			<header class="modal-card-head">
+				<div class="modal-card-title">Config</div>
+				<a class="delete dialog-close" aria-label="close"></a>
+			</header>
+			<section class="modal-card-body">
+				<div class="field">
+					<div class="field-label is-normal">
+						<label class="label">encTitleKeys.bin URL</label>
+					</div>
+					<div class="field-body">
+						<div class="field">
+							<p class="control">
+								<input id="enctitlekeysBinRemoteUrl" class="input" type="text" placeholder="http://">
+							</p>
+					</div>
+				</div>
+			</section>
+			<footer class="buttons modal-card-foot is-right">
+				<button id="config-save" class="button is-success" type="submit">Save</button>
+				<a class="button dialog-close">Close</a>
+			</footer>
+			</form>
+			<div class="config-saved-notif notification is-success bottom-notif" style="display:none;">
+				All changes saved. You might need to restart the application.
+			</div>
+		</div>
+	</div>
+
+	<div class="modal modal-about">
+		<div class="modal-background"></div>
+		<div class="modal-card">
+			<header class="modal-card-head">
+				<div class="modal-card-title">About</div>
+				<button class="delete dialog-close" aria-label="close"></button>
+			</header>
+			<section class="modal-card-body">
+				<div class="info"><p><strong>Villain3DS Desktop</strong><br>
+				Download 3DS games to your PC as .cia files.<br>
+				Version: <span id="curr-ver">#.#.#</span</p>
+				<p class="info" id="check-newer-version"></p>
+				</div>
+			</section>
+			<footer class="buttons modal-card-foot is-right">
+				<button class="button dialog-close">Close</button>
+			</footer>
+		</div>
+	</div>
+    <script>
+        // You can also require other files to run in this process
+        require('./renderer-index.js')
+		/* switch tabs when showing details */
+		function removeActive() {
+			$("li").each(function() {
+				$(this).removeClass("is-active");
+			});
+		}
+		function hideAll(){
+			$("#info-tab-content").addClass("hidden");
+			$("#title-desc").addClass("hidden");
+			$("#src-tab-content").addClass("hidden");
+			$("#qr-tab-content").addClass("hidden");
+		}
+		function switchToInfo() {
+			removeActive();
+			hideAll();
+			$('.info-tab').addClass("is-active");
+			$('#info-tab-content').removeClass("hidden");
+		}
+		function switchToDesc() {
+			removeActive();
+			hideAll();
+			$('.desc-tab').addClass("is-active");
+			$('#title-desc').removeClass("hidden");
+			console.log('ran');
+		}
+		function switchToScr() {
+			removeActive();
+			hideAll();
+			$('.src-tab').addClass("is-active");
+			$('#src-tab-content').removeClass("hidden");
+		}
+		function switchToQr() {
+			removeActive();
+			hideAll();
+			$('.qr-tab').addClass("is-active");
+			$('#qr-tab-content').removeClass("hidden");
+		}
+    </script>
+    </body>
+</html>

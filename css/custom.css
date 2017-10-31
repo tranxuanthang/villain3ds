@@ -1,0 +1,121 @@
+::-webkit-scrollbar {
+  width: 5px;
+  background-color: transparent;
+  overflow: visible;
+}
+ 
+::-webkit-scrollbar-track {
+    background-color: rgba(27, 30, 50, 0.15);
+}
+ 
+::-webkit-scrollbar-thumb {
+    background: #39546E;
+}
+.navmain { position: fixed; top: 0; left: 0; right: 0;z-index: 2}
+html { overflow-y: hidden; }
+.main-content {
+    height: calc(100vh - 52px);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    margin-top:52px;
+}
+.navbar.is-primary .navbar-brand .navbar-link, .navbar.is-primary .navbar-brand>.navbar-item[disabled][disabled] {
+    color: rgb(235, 208, 195);
+    cursor: default;
+    background-color: transparent;
+}
+.mdl-card__title-text{
+    line-height: 1.2;
+}
+.hidden {
+    display: none;
+}
+.section3{
+    margin:30px 10px 6px 10px;
+}
+.modal-card {
+    height: calc(85vh - 40px);
+    
+}
+.modal-card-body{
+    height: 100%;
+    overflow:auto;
+	padding: 10px;
+}
+.info p {
+	margin-bottom: 0.5rem;
+}
+.tabs:not(:last-child) {
+    margin-bottom: 0.5rem;
+}
+#tab-content{
+    height: calc(100% - 49px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.media-left {
+    margin-right: 0.5rem;
+}
+.box {
+    padding: 0.95rem;
+}
+.desc {
+    font-size: small;
+}
+#title-name{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+}
+:not(input):not(textarea),
+:not(input):not(textarea)::after,
+:not(input):not(textarea)::before {
+    -webkit-user-select: none;
+    user-select: none;
+}
+input, button, textarea, :focus {
+    outline: none; // You should add some other style for :focus to help UX/a11y
+}
+a:not([draggable=true]), img:not([draggable=true]) {
+    -webkit-user-drag: none;
+    user-drag: none; /* Technically not supported in Electron yet */
+}
+a[href^="http://"],
+a[href^="https://"],
+a[href^="ftp://"] {
+    -webkit-user-drag: auto;
+    user-drag: auto; /* Technically not supported in Electron yet */
+}
+.allow-select , .allow-select img{
+	-webkit-user-select: auto;
+}
+.allow-drag, .allow-drag img {
+	-webkit-user-drag: auto;
+}
+.ion-fw {
+  display: inline-block;
+  width: 1.28571em;
+  text-align: center;
+}
+.bottom-notif {
+	width: auto;
+	position: fixed;
+	left: 50%;
+	transform: translate(-50%, 0);
+	bottom:0%;
+}
+.notification {
+    padding: 1rem 2.5rem 1rem 1.5rem;
+}
+.notification:not(:last-child) {
+    margin-bottom: 0;
+}
+.tabs li.is-active a {
+    border-bottom-color: #fff;
+    color: #fff;
+}
+.navbar.is-primary {
+    background-color: #243749;
+    color: #fff;
+    box-shadow: 0px 1px 12px 1px #1F3040;
+}
