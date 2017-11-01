@@ -28,8 +28,6 @@ function showTitleInfo(data) {
 	if (data.query.scrbot1!='none') $('#scrbot1').attr('src', data.query.scrbot1);
 	if (data.query.scrbot2!='none') $('#scrbot2').attr('src', data.query.scrbot2);
 	if (data.query.scrbot3!='none') $('#scrbot3').attr('src', data.query.scrbot3);
-	let qrurl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURI('http://3ds.titlekeys.gq/ticket/')+data.query.titleID;
-	$('#qr-image').attr('src', qrurl);
 }
 
 function getTitleInfo(id) {
