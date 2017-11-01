@@ -34,7 +34,7 @@ function showTitleInfo(data) {
 
 function getTitleInfo(id) {
 	queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=title&id='+id;
-	console.log(queryUrl);
+	console.log('Request title info: '+queryUrl);
 	$.getJSON(queryUrl, showTitleInfo);
 }
 
@@ -53,6 +53,7 @@ function sendDownloadRequest() {
 
 function showListing(param,sort,page,keyword) {
 	return function (data) {
+		$('.error').html('');
 		param.fadeOut('fast').hide();
 		param.empty();
 		for (var i = 0; i < data.query.length; i++) {
@@ -73,7 +74,7 @@ function showListing(param,sort,page,keyword) {
 		}
 		//if(i=data.query.length-1)$('#loading').fadeOut();
 		param.fadeIn('fast');
-		console.log(queryUrl);
+		console.log('Request listing: '+queryUrl);
 		storingData.sort = sort;
 		storingData.page = page;
 		storingData.keyword = keyword;
@@ -108,10 +109,10 @@ function showListing(param,sort,page,keyword) {
 
 function getListing(param,sort,page,keyword) {
 	$('#loading').fadeIn();
-	console.log('page: '+page);
+	console.log('Current page: '+page);
 	start = (page-1)*36;
 	if(!keyword){
-		console.log('dkm no '+sort);
+		console.log('Current sorting '+sort);
 		queryUrl = 'http://3ds.game4u.pro/apiv2.php?sort='+sort+'&from='+start+'&qual=36';
 	} else {
 		queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36';
@@ -119,7 +120,11 @@ function getListing(param,sort,page,keyword) {
 	$.getJSON(queryUrl, showListing(param,sort,page,keyword)).done(function(d) {
 		$('#loading').fadeOut();
 	}).fail(function(d) {
-		$('.demo-content').html('<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--8-col error">An error has occured ;-((</div>');
+		$('.error').html('<section class="hero is-dark"><div class="hero-body"><div class="container">'
+			+'<h1 class="title">Oops. Something is wrong</h1>'
+			+'<h2 class="subtitle">An error has occured ;-(</h2>'
+		  +'</div></div></section>');
+		$('#grid').html('');
 		$('#loading').fadeOut();
     });
 }
@@ -171,12 +176,10 @@ function pageNavigator(){
 	case "prev":
 		if(currpage>1)
 		getListing($(".demo-content"),getsort,currpage-1,getKeyword);
-		console.log('send');
 		break;
 	case "next":
 		if(currpage<sumpage)
 		getListing($(".demo-content"),getsort,currpage+1,getKeyword);
-		console.log('send');
 	}
 	// Stop normal link behavior
 	return false;

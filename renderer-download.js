@@ -54,7 +54,7 @@ function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 		// Change the total bytes value to get progress later.
 			fileSize = parseInt(data.headers['content-length' ]);
 			//fileSize = xhr.getResponseHeader('Content-Length');
-			console.log(fileSize);
+			console.log('cid '+cID+' size: '+fileSize);
 			if (fs.existsSync(targetPath)) {
 				var stats = fs.statSync(targetPath)
 				var fileSizeInBytes = stats["size"];
@@ -160,7 +160,9 @@ function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 }
 
 function downloadFile(file_url , targetPath, cID, ContentCount){
-	if (fs.existsSync(targetPath)) {fs.unlinkSync(targetPath);}
+	if (fs.existsSync(targetPath)) {
+		fs.unlinkSync(targetPath);
+	}
     // Save variable to know progress
     var received_bytes = 0;
     var total_bytes = 0;
@@ -277,6 +279,7 @@ function processDownloadTitle(results,data) {
 	
 	
 	var tmdByteTypedArray = new Uint8Array(tmdDownloadedData.target.response);
+	
 	/* Convert tiktem and magic in hexadecimal to a binary array */
 	tikdataArr = hex2binArr(tikteminhex);
 	magic = hex2binArr(magicinhex);
@@ -311,29 +314,6 @@ function processDownloadTitle(results,data) {
 	/* Create cetk file by joining tikdata with magic */
 	var finalCetk = new Buffer(tikdataArr.concat(magic));
 	
-	
-	
-	
-	
-	/* Paste make_cdn_cia to base dir */
-	
-	if (isDev()) {
-		fs.createReadStream('./make_cdn_cia.exe').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia.exe')));
-		fs.createReadStream('./make_cdn_cia').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia')));
-		fs.createReadStream('./make_cdn_cia_macos').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia_macos')));
-	} else {
-		if(os.platform()=='win32'){
-			fs.createReadStream('./resources/app.asar/make_cdn_cia.exe').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia.exe')));
-		} else if(os.platform()=='linux'){
-			fs.createReadStream('./resources/app.asar/make_cdn_cia').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia')));
-			fs.chmodSync(path.join(homedir, 'Villain3DS','make_cdn_cia'),'744');
-		} else if(os.platform()=='darwin'){
-			fs.createReadStream('./resources/app.asar/make_cdn_cia_macos').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia_macos')));
-			fs.chmodSync(path.join(homedir, 'Villain3DS','make_cdn_cia_macos'),'744');
-		}
-	}
-	
-	
 	/* Save tmd and cetk file to download dir */
 	try {
 		fs.writeFileSync(path.join(dldir,'tmd'), tmdByteTypedArray);
@@ -350,6 +330,32 @@ function processDownloadTitle(results,data) {
 		throw err;
 		$("#cetk").html('Error while saving cetk!');
 	}
+
+
+	/* Paste make_cdn_cia to base dir */
+	
+	if (isDev()) {
+		/* Windows */
+		fs.createReadStream('./make_cdn_cia.exe').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia.exe')));
+		/* Linux */
+		fs.createReadStream('./make_cdn_cia').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia')));
+		fs.chmodSync(path.join(homedir, 'Villain3DS','make_cdn_cia'),'744');
+		/* macOS */
+		fs.createReadStream('./make_cdn_cia_macos').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia_macos')));
+		fs.chmodSync(path.join(homedir, 'Villain3DS','make_cdn_cia_macos'),'744');
+	} else {
+		if(os.platform()=='win32'){
+			fs.createReadStream('./resources/app.asar/make_cdn_cia.exe').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia.exe')));
+		} else if(os.platform()=='linux'){
+			fs.createReadStream('./resources/app.asar/make_cdn_cia').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia')));
+			fs.chmodSync(path.join(homedir, 'Villain3DS','make_cdn_cia'),'744');
+		} else if(os.platform()=='darwin'){
+			fs.createReadStream('./resources/app.asar/make_cdn_cia_macos').pipe(fs.createWriteStream(path.join(homedir, 'Villain3DS','make_cdn_cia_macos')));
+			fs.chmodSync(path.join(homedir, 'Villain3DS','make_cdn_cia_macos'),'744');
+		}
+	}
+
+	/* Create download tasks for each cID */
 	for(var i = 0; i < ContentCount; i++) {
 		//console.log('i='+i);
 		var cOffs = 0xB04+(0x30*i);
@@ -364,10 +370,17 @@ function processDownloadTitle(results,data) {
 	//}
 }
 function processDownload(event, data){
-	$("#name").html(data.name);
-	$("#region").html(data.region);
-	$("#titleid").html(data.titleID);
-
+	if(!data.titleID || !data.region ||!data.name){
+		$("#name").html('ERROR');
+		$("#region").html('ERROR');
+		$("#titleid").html('ERROR');
+		$('#content').append('<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--12-col listing">Title information can\'t be achieved.</div>');
+		throw 'title-info-can-not-be-achieved';
+	} else {
+		$("#name").html(data.name);
+		$("#region").html(data.region);
+		$("#titleid").html(data.titleID);
+	}
 	/* Get home directory */
 	homedir = app.getPath('home');
 	
@@ -460,4 +473,3 @@ ipcRenderer.once('download-title' , processDownload);
 $(document).ready(function(){
 	ipcRenderer.send('dlprocess-ready');
 });
-
