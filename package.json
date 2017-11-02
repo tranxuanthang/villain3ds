@@ -1,13 +1,13 @@
 {
   "name": "Villain3DS",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Download 3DS games to your PC as .cia files.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "package-mac": "electron-packager . --overwrite --asar --platform=darwin --arch=x64 --prune=true --out=../release-builds",
-    "package-win": "electron-packager . --overwrite --asar --platform=win32 --arch=ia32 --icon=img/icon.ico --prune=true --out=../release-builds --version-string.ProductName=\"darkeShop\"",
-    "package-win64": "electron-packager . --overwrite --asar --platform=win32 --arch=x64 --icon=img/icon.ico --prune=true --out=../release-builds --version-string.ProductName=\"darkeShop\"",
+    "package-win": "electron-packager . --overwrite --asar --platform=win32 --arch=ia32 --icon=img/icon.ico --prune=true --out=../release-builds --version-string.ProductName=\"Villain3DS\"",
+    "package-win64": "electron-packager . --overwrite --asar --platform=win32 --arch=x64 --icon=img/icon.ico --prune=true --out=../release-builds --version-string.ProductName=\"Villain3DS\"",
     "package-linux": "electron-packager . --overwrite --asar --platform=linux --arch=x64 --icon=img/icon.png --prune=true --out=../release-builds"
   },
   "devDependencies": {
