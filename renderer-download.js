@@ -114,8 +114,8 @@ function hex2binArr(inputhex){
 }
 
 function makecia(makeciadir, rawdir, tempciadir, ciadir){
-	execute(makeciadir+' "'+rawdir+'" "'+tempciadir+'"', function(output) {
-		console.log(makeciadir+' "'+rawdir+'" "'+tempciadir+'"');
+	execute('"'+makeciadir+'" "'+rawdir+'" "'+tempciadir+'"', function(output) {
+		console.log('"'+makeciadir+'" "'+rawdir+'" "'+tempciadir+'"');
 		console.log(output);
 		output = output.replace(/(?:\r\n|\r|\n)/g, '<br />');
 		$('#makecia').html(''+makeciadir+' "'+rawdir+'" "'+tempciadir+'"'+'<br>'+output+'');
