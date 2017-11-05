@@ -139,7 +139,7 @@ function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 	});
 	req.on('response', function ( data ) {
 		// Change the total bytes value to get progress later.
-			fileSize = parseInt(data.headers['content-length' ]);
+			let fileSize = parseInt(data.headers['content-length' ]);
 			//fileSize = xhr.getResponseHeader('Content-Length');
 			console.log('cid '+cID+' size: '+fileSize);
 			if (fs.existsSync(targetPath)) {
@@ -232,7 +232,9 @@ function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 					if (fs.existsSync(targetPath)) {
 						var stats = fs.statSync(targetPath)
 						var fileSizeInBytes = stats["size"];
+						console.log('"I\'ve downloaded it" information: local file size '+fileSizeInBytes+', true file size: '+fileSize);
 						if(fileSizeInBytes == fileSize){
+							
 							$('#info'+cID).hide();
 							$('#instruct'+cID).hide();
 							document.querySelector('#p'+cID).MaterialProgress.setProgress(100);
@@ -291,8 +293,7 @@ function downloadFile(file_url , targetPath, cID, ContentCount){
 		//         elapsed: 36.235,        // The total elapsed seconds since the start (3 decimals) 
 		//         remaining: 81.403       // The remaining seconds to finish (3 decimals) 
 		//     } 
-		// } 
-		console.log('progress', state);
+		// }
 		app.showExitPrompt = true;
 		showProgress(state, cID);
 	})
@@ -334,8 +335,16 @@ function showProgress(state, cID){
 	var percentage = state.percent*100;
 	var received = state.size.transferred;
 	var total = state.size.total;
-	var speed = humanFileSize(state.speed,true);
-	var remainingTime = moment.duration(parseInt(state.time.remaining), 'seconds').humanize();
+
+	var rawSpeed = state.speed;
+	if(rawSpeed === null) rawSpeed = 0;
+	var speed = humanFileSize(rawSpeed,true);
+
+	var rawEta = parseInt(state.time.remaining);
+	console.log(rawEta);
+	if(!rawEta)rawEta = 0;
+	var remainingTime = moment.duration(rawEta, 'seconds').humanize();
+	
     //console.log(percentage + "% | " + received + " bytes out of " + total + " bytes.");
 	$('#info'+cID).html('');
 	$('#done'+cID).html(percentage.toFixed(2) + '% | ' + humanFileSize(received,true) + ' out of ' + humanFileSize(total,false)

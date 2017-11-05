@@ -11,12 +11,11 @@ const shell = require('electron').shell;
 // All of the Node.js APIs are available in this process.
 
 var storingData = {sort: 0, page: 0, keyword: ''};
-var homedir = app.getPath('home');
 const store = new Store({
 	configName: 'config',
 	defaults: {
 	  enctitlekeysBinRemoteUrl: "",
-	  baseDirectory: path.join(homedir, 'Villain3DS'),
+	  baseDirectory: path.join(app.getPath('home'), 'Villain3DS'),
 	  region: "all"
 	}
   });
@@ -52,16 +51,15 @@ function sendDownloadRequest() {
 		} else if(data=='already-downloading'){
 			$('.already-downloading-notif').fadeIn().delay(1200).fadeOut();
 		}
-		// this function never gets called
 		console.log(data);
 	});
 }
 
 function showListing(param,sort,page,keyword) {
 	return function (data) {
-		$('.error').html('');
-		param.fadeOut('fast').hide();
+		param.hide();
 		param.empty();
+		$('.error').html('');
 		for (var i = 0; i < data.query.length; i++) {
 			if(data.query[i].icon == "none")iconUrl = './img/blank.png'; else iconUrl = data.query[i].icon;
 			param.append(
@@ -96,24 +94,11 @@ function showListing(param,sort,page,keyword) {
 			getTitleInfo(getid);
 			$('.modal-title').addClass('is-active');
 		});
-		$('.modal-title .dialog-close, .modal-title .modal-background').on('click', function() {
-			$('.modal').removeClass('is-active');
-			$('#title-name').html('###');
-			$('#title-desc, #title-region, #title-desc, #title-titleID, #title-size').empty();
-			$('#scrtop1').attr('src', 'img/blank400x240.png');
-			$('#scrtop2').attr('src', 'img/blank400x240.png');
-			$('#scrtop3').attr('src', 'img/blank400x240.png');
-		
-			$('#scrbot1').attr('src', 'img/blank320x240.png');
-			$('#scrbot2').attr('src', 'img/blank320x240.png');
-			$('#scrbot3').attr('src', 'img/blank320x240.png');
-		});
-		$('#download-button').unbind('click').on('click', sendDownloadRequest);
 	}
 }
 
 function getListing(param,sort,page,keyword) {
-	$('#loading').fadeIn();
+	//$('#loading').fadeIn();
 	console.log('Current page: '+page);
 	start = (page-1)*36;
 	let showRegion = store.get('region');
@@ -123,15 +108,16 @@ function getListing(param,sort,page,keyword) {
 	} else {
 		queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36&region='+showRegion;
 	}
+	
 	$.getJSON(queryUrl, showListing(param,sort,page,keyword)).done(function(d) {
-		$('#loading').fadeOut();
+		//$('#loading').fadeOut();
 	}).fail(function(d) {
 		$('.error').html('<section class="hero is-dark"><div class="hero-body"><div class="container">'
 			+'<h1 class="title">Oops. Something is wrong</h1>'
 			+'<h2 class="subtitle">An error has occured ;-(</h2>'
 		  +'</div></div></section>');
 		$('#grid').html('');
-		$('#loading').fadeOut();
+		//$('#loading').fadeOut();
     });
 }
 
@@ -225,6 +211,7 @@ function checkNewVersion() {
 		
 	});
 }
+
 $('#config-button').on('click', function() {
 	let showRegion = store.get('region');
 	let basePath = store.get('baseDirectory');
@@ -266,7 +253,6 @@ $('.modal-about .dialog-close, .modal-about .modal-background').on('click', func
 	$('.modal').removeClass('is-active');
 });
 
-
 $("#config-save").click(function(e){
 	let enctitlekeysBinRemoteUrl = $('#enctitlekeysBinRemoteUrl').val();
 	let basedirpath = $('#basedirpath').val();
@@ -279,19 +265,40 @@ $("#config-save").click(function(e){
 	$('.config-saved-notif').fadeIn().delay(1200).fadeOut();
 	e.preventDefault();
 });
-$(document).ready(function(){
-	/* for sorting */
-	var trigger = $('#sort-0, #sort-1, #sort-2');
-	trigger.on('click', sortingHandler);
-	
-	/* for prev - next */
-	var trigger2 = $('#prev-link, #next-link');
-	trigger2.on('click', pageNavigator);
-	
-	/* search */
-	$("#search-form").submit(searchSubmit);
-	
-	
-});
 
 getListing($(".demo-content"),0,1,'');
+
+/* for sorting */
+var trigger = $('#sort-0, #sort-1, #sort-2');
+trigger.on('click', sortingHandler);
+
+/* for prev - next */
+var trigger2 = $('#prev-link, #next-link');
+trigger2.on('click', pageNavigator);
+
+/* search */
+$("#search-form").submit(searchSubmit);
+
+/* Close modal */
+$('.modal-title .dialog-close, .modal-title .modal-background').on('click', function() {
+	$('.modal').removeClass('is-active');
+	$('#title-name').html('###');
+	$('#title-desc, #title-region, #title-desc, #title-titleID, #title-size').empty();
+	$('#scrtop1').attr('src', 'img/blank400x240.png');
+	$('#scrtop2').attr('src', 'img/blank400x240.png');
+	$('#scrtop3').attr('src', 'img/blank400x240.png');
+
+	$('#scrbot1').attr('src', 'img/blank320x240.png');
+	$('#scrbot2').attr('src', 'img/blank320x240.png');
+	$('#scrbot3').attr('src', 'img/blank320x240.png');
+});
+
+/* Click download button */
+$('#download-button').on('click', sendDownloadRequest);
+
+ipcRenderer.on('openTitleID' , (event, arg) => {
+	setTimeout(function(){
+		$('input[name=keyword]').val(arg);
+		getListing($(".demo-content"),'',1,arg);
+	}, 200);
+});

@@ -25,7 +25,7 @@ html { overflow-y: hidden; }
     background-color: transparent;
 }
 .mdl-card__title-text{
-    line-height: 1.2;
+    line-height: 1.1;
 }
 .hidden {
     display: none;

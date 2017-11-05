@@ -11,25 +11,47 @@ var fs = require('fs');
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-
-app.setAsDefaultProtocolClient('villain3ds')
-app.on('open-url', function (event, url) {
-	dialog.showErrorBox('Welcome Back', `You arrived from: ${url}`)
-})
 function isDev() {
   return process.mainModule.filename.indexOf('app.asar') === -1;
 }
 if (!isDev()) {
 	require('./js/menu');
 }
-var shouldQuit = app.makeSingleInstance(function(commandLine, workingDirectory) {
-  // Someone tried to run a second instance, we should focus our window.
-  if (mainWindow) {
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.focus();
-  }
+function openDeepLinking(dlUrl,delay){
+	if(dlUrl){
+		logEverywhere("Received deeplinking: " + dlUrl);
+		var arr = dlUrl.toString().split("/");
+		var deeplinkingResult = arr[2];
+		if(delay==0)
+		mainWindow.webContents.send('openTitleID', deeplinkingResult);
+		else
+			setTimeout(function(){
+				mainWindow.webContents.send('openTitleID', deeplinkingResult);
+			}, 1000);
+	}
+}
+app.setAsDefaultProtocolClient('villain3ds');
+let deeplinkingUrl;
+
+// Protocol handler for osx
+app.on('open-url', function (event, url) {
+  event.preventDefault()
+  deeplinkingUrl = url;
+	openDeepLinking(deeplinkingUrl,1);
 });
 
+var shouldQuit = app.makeSingleInstance((argv, workingDirectory) => {
+  // Someone tried to run a second instance, we should focus our window.
+	if (process.platform == 'win32') {
+    // Keep only command line / deep linked arguments
+    deeplinkingUrl = argv.slice(1)
+	}
+	openDeepLinking(deeplinkingUrl,0);
+	if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+	}
+});
 if (shouldQuit) {
   app.quit();
   return;
@@ -84,7 +106,15 @@ function createWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
-  })
+	})
+	
+	// Protocol handler for win32
+  if (process.platform == 'win32') {
+    // Keep only command line / deep linked arguments
+    deeplinkingUrl = process.argv.slice(1)
+  }
+	
+	openDeepLinking(deeplinkingUrl,1);
 }
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -110,7 +140,7 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-downloadWindow = new Array();
+var downloadWindow = new Array();
 app.showExitPrompt = true;
 const ipcMain = electron.ipcMain;
 ipcMain.on('download-title', function(event, data){
@@ -172,3 +202,10 @@ ipcMain.on('get-homedir', (event) => {
     // Reply on async message from renderer process
     event.returnValue = homePath;
 });
+
+function logEverywhere(s) {
+	console.log(s)
+	if (mainWindow && mainWindow.webContents) {
+		mainWindow.webContents.executeJavaScript(`console.log("${s}")`)
+	}
+}
