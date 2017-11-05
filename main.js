@@ -16,7 +16,12 @@ app.setAsDefaultProtocolClient('villain3ds')
 app.on('open-url', function (event, url) {
 	dialog.showErrorBox('Welcome Back', `You arrived from: ${url}`)
 })
-
+function isDev() {
+  return process.mainModule.filename.indexOf('app.asar') === -1;
+}
+if (!isDev()) {
+	require('./js/menu');
+}
 var shouldQuit = app.makeSingleInstance(function(commandLine, workingDirectory) {
   // Someone tried to run a second instance, we should focus our window.
   if (mainWindow) {
@@ -31,9 +36,7 @@ if (shouldQuit) {
 }
 
 /* Clean etkCache */
-let homedir = app.getPath('home');
-let basedir = path.join(homedir, 'Villain3DS');
-let targetPath = path.join(basedir, 'etkCache.json');
+let targetPath = path.join(app.getPath('userData'), 'etkCache.json');
 if (fs.existsSync(targetPath)){
 	fs.stat(targetPath, function(err,stats){
 		//console.log(stats);
@@ -83,7 +86,6 @@ function createWindow () {
     mainWindow = null
   })
 }
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

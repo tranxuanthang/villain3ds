@@ -1,17 +1,25 @@
 var remote = require('electron').remote;
 const {app} = require('electron').remote;
+const {dialog} = require('electron').remote;
 var ipcRenderer = require('electron').ipcRenderer;
 const Store = require('./js/store.js');
 const path = require('path')
 var fs = require('fs');
 const shell = require('electron').shell;
-
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
 
 var storingData = {sort: 0, page: 0, keyword: ''};
-
+var homedir = app.getPath('home');
+const store = new Store({
+	configName: 'config',
+	defaults: {
+	  enctitlekeysBinRemoteUrl: "",
+	  baseDirectory: path.join(homedir, 'Villain3DS'),
+	  region: "all"
+	}
+  });
 
 function showTitleInfo(data) {
 	console.log(queryUrl);
@@ -85,7 +93,6 @@ function showListing(param,sort,page,keyword) {
 		showDialogButton.on('click', function() {
 			var $this = $(this),
 			getid = parseInt($this.data('id'));
-			console.log(getid);
 			getTitleInfo(getid);
 			$('.modal-title').addClass('is-active');
 		});
@@ -109,11 +116,12 @@ function getListing(param,sort,page,keyword) {
 	$('#loading').fadeIn();
 	console.log('Current page: '+page);
 	start = (page-1)*36;
+	let showRegion = store.get('region');
 	if(!keyword){
 		console.log('Current sorting '+sort);
-		queryUrl = 'http://3ds.game4u.pro/apiv2.php?sort='+sort+'&from='+start+'&qual=36';
+		queryUrl = 'http://3ds.game4u.pro/apiv2.php?sort='+sort+'&from='+start+'&qual=36&region='+showRegion;
 	} else {
-		queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36';
+		queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36&region='+showRegion;
 	}
 	$.getJSON(queryUrl, showListing(param,sort,page,keyword)).done(function(d) {
 		$('#loading').fadeOut();
@@ -218,35 +226,55 @@ function checkNewVersion() {
 	});
 }
 $('#config-button').on('click', function() {
+	let showRegion = store.get('region');
+	let basePath = store.get('baseDirectory');
+	if(showRegion != 'all' && showRegion != 'usa' && showRegion != 'eur' && showRegion != 'jpn'){
+		showRegion = 'all';
+		store.set('region', showRegion);
+	}
 	$('.modal-config').addClass('is-active');
 	$('#config-form').attr("disabled", false);
 	$('#enctitlekeysBinRemoteUrl').val(store.get('enctitlekeysBinRemoteUrl'));
+	console.log('current region: '+showRegion);
+	$('input[name=region][value='+showRegion+']').prop("checked",true);
+	$('#basedirpath').val(basePath);
+	$('#basedirpathselect').on('click', function(){
+		dialog.showOpenDialog({ 
+			defaultPath: $('#basedirpath').val(),
+			properties: [ 
+				'openDirectory'
+			]
+		}, function(dirpath){
+			console.log(dirpath);
+			if(dirpath) $('#basedirpath').val(dirpath);
+		});
+	});
 });
+
 $('#about-button').on('click', function() {
 	$('.modal-about').addClass('is-active');
 	checkNewVersion();
 });
+
 $('.modal-config .dialog-close, .modal-config .modal-background').on('click', function() {
 	$('.modal').removeClass('is-active');
 	$('#config-form').attr("disabled", true);
+	$('#basedirpathselect').off('click');
 });
+
 $('.modal-about .dialog-close, .modal-about .modal-background').on('click', function() {
 	$('.modal').removeClass('is-active');
 });
 
-const store = new Store({
-  configName: 'config',
-  defaults: {
-    enctitlekeysBinRemoteUrl: ""
-  }
-});
-$("#config-form").submit(function(e){
+
+$("#config-save").click(function(e){
 	let enctitlekeysBinRemoteUrl = $('#enctitlekeysBinRemoteUrl').val();
-	console.log(enctitlekeysBinRemoteUrl);
+	let basedirpath = $('#basedirpath').val();
+	let showRegion = $("input[name=region]:checked").val();
 	store.set('enctitlekeysBinRemoteUrl', enctitlekeysBinRemoteUrl);
-	let homedir = app.getPath('home');
-	let basedir = path.join(homedir, 'Villain3DS');
-	let targetPath = path.join(basedir, 'etkCache.json');
+	store.set('baseDirectory', basedirpath);
+	store.set('region', showRegion);
+	let targetPath = path.join(app.getPath('userData'), 'etkCache.json');
 	if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
 	$('.config-saved-notif').fadeIn().delay(1200).fadeOut();
 	e.preventDefault();

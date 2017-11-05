@@ -48,7 +48,7 @@
 											<input class="input" name="keyword" type="text" placeholder="Find titles..." id="search">
 										</div>
 										<div class="control">
-											<input type="submit" class="button is-info" value="Search">
+											<input type="submit" class="button is-primary" value="Search">
 										</div>
 									</div>
 								</form>
@@ -56,9 +56,9 @@
 						</div>
 						<div class="navbar-brand" style="float:right">
 							<div class="navbar-item">
-								<a class="button" id="config-button"><span class="icon"><i class="ion-ios-gear ion-fw"></i></span></a>
+								<a class="button is-primary" id="config-button"><span class="icon"><i class="ion-ios-gear ion-fw"></i></span></a>
 							
-								<a class="button" id="about-button"><span class="icon"><i class="ion-information-circled ion-fw"></i></span></a>
+								<a class="button is-primary" id="about-button"><span class="icon"><i class="ion-information-circled ion-fw"></i></span></a>
 							</div>
 						</div>
 					</div>
@@ -135,21 +135,56 @@
 	<div class="modal modal-config">
 		<div class="modal-background"></div>
 		<div class="modal-card">
-			<form id="config-form">
 			<header class="modal-card-head">
 				<div class="modal-card-title">Config</div>
 				<a class="delete dialog-close" aria-label="close"></a>
 			</header>
 			<section class="modal-card-body">
-				<div class="field">
-					<div class="field-label is-normal">
-						<label class="label">encTitleKeys.bin URL</label>
+				<div class="modal-card-body-scrollable">
+					<div class="field">
+						<div class="label">
+							<label class="label">encTitleKeys.bin URL:</label>
+						</div>
+						<div class="field-body">
+							<div class="field">
+								<p class="control">
+									<input id="enctitlekeysBinRemoteUrl" class="input" type="text" placeholder="http://">
+								</p>
+							</div>
+						</div>
 					</div>
-					<div class="field-body">
-						<div class="field">
-							<p class="control">
-								<input id="enctitlekeysBinRemoteUrl" class="input" type="text" placeholder="http://">
-							</p>
+					<div class="field">
+							<div class="label">
+								<label class="label">Base directory path:</label>
+							</div>
+								<div class="field has-addons">
+									<p class="control is-expanded">
+										<input id="basedirpath" class="input" type="text">
+									</p>
+									<div class="control"><a id="basedirpathselect" class="button">Select</a></div>
+								</div>
+								<p class="help is-warning">If changed, this option will not delete the old directory, so you might want to manually clean it yourself later.</p>
+						</div>
+					<div class="field">
+						<div class="label">
+							<label class="label">Your console's region:</label>
+						</div>
+						<div class="field-body">
+							<div class="field">
+								<div class="control">
+									<label class="radio"><input type="radio" name="region" value="all">Show all regions</label>
+								</div>
+								<div class="control">
+									<label class="radio"><input type="radio" name="region" value="usa">USA</label>
+								</div>
+								<div class="control">
+									<label class="radio"><input type="radio" name="region" value="eur">EUR</label>
+								</div>
+								<div class="control">
+									<label class="radio"><input type="radio" name="region" value="jpn">JPN</label>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -157,7 +192,6 @@
 				<button id="config-save" class="button is-success" type="submit">Save</button>
 				<a class="button dialog-close">Close</a>
 			</footer>
-			</form>
 			<div class="config-saved-notif notification is-success bottom-notif" style="display:none;">
 				All changes saved. You might need to restart the application.
 			</div>

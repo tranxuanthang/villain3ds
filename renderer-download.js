@@ -1,7 +1,8 @@
 var remote = require('electron').remote;
 const {app} = require('electron').remote;
+const {dialog} = require('electron').remote;
 var ipcRenderer = require('electron').ipcRenderer;
-var fs = require('fs');
+var fs = require("fs-extra");
 var request = require('request');
 var progress = require('request-progress');
 var moment = require('moment');
@@ -13,11 +14,13 @@ var os = require('os');
 var flow = require('./js/flow.js')
 const Store = require('./js/store.js');
 const store = new Store({
-  configName: 'config',
-  defaults: {
-	enctitlekeysBinRemoteUrl: ""
-  }
-});
+	configName: 'config',
+	defaults: {
+	  enctitlekeysBinRemoteUrl: "",
+	  baseDirectory: path.join(app.getPath('home'), 'Villain3DS'),
+	  region: "all"
+	}
+  });
 const etkStore = new Store({
   configName: 'etkCache',
   defaults: {
@@ -31,6 +34,8 @@ var finalTitleKey;
 var data;
 var tempfilename;
 var filename;
+var basedir = store.get('baseDirectory');
+var dldir;
 app.showExitPrompt = false;
 
 function isDev() {
@@ -129,7 +134,8 @@ function makecia(makeciadir, rawdir, tempciadir, ciadir){
 function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 	let req = request({
 		method: 'GET',
-		uri: file_url
+		uri: file_url,
+		timeout: 5000
 	});
 	req.on('response', function ( data ) {
 		// Change the total bytes value to get progress later.
@@ -181,7 +187,9 @@ function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 				
 				$('#info'+cID+' #dlwithidm').on('click', function(){
 					defaultidmpath = 'C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe';
-					$('#instruct'+cID).html('<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" value="'+defaultidmpath+'" id="idmpathinput"></div><button id="selectidmpath" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent">Select...</button><br><button id="idmapply" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-button--primary">Apply</button>');
+					$('#instruct'+cID).html('<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" value="'+defaultidmpath+'" id="idmpathinput"></div><button id="selectidmpath" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent">Select...</button>'
+					+'Click the button below to start download with IDM. After the download is finished, go back to this window and click "I\'ve download it".'
+					+'<br><button id="idmapply" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-button--primary">Start IDM</button>');
 					$('#instruct'+cID+' #selectidmpath').on('click', function(){
 						dialog.showOpenDialog({ 
 							defaultPath: defaultidmpath,
@@ -202,15 +210,20 @@ function choiceHandle(file_url , targetPath, cID, ContentCount, dldir){
 							console.log(output);
 						});
 					});
-					
 			   });
 			   
-			   
 			   $('#info'+cID+' #dlwithuget').on('click', function(){
+					$('#instruct'+cID).html(
+						'Click the button below to start download with uGet. After the download is finished, go back to this window and click "I\'ve download it".'
+						+'<br>Do not click it while uGet is still downloading, or the app will generate broken cia file that won\'t work.'
+						+'<br><button id="ugetapply" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-button--primary">Start uGet</button>'
+					);
+					$('#instruct'+cID+' #ugetapply').on('click', function(){
 						execute('uget-gtk --filename="'+cID+'" --folder="'+dldir+'" "'+file_url+'"', function(output) {
-						console.log('"'+$('#idmpathinput').val()+'" /d '+file_url+' /p "'+dldir+'" /f "'+cID+'"');
-						console.log(output);
-						});
+							console.log('uget-gtk --filename="'+cID+'" --folder="'+dldir+'" "'+file_url+'"');
+							console.log(output);
+							});
+					});
 			   });
 			   
 			   
@@ -252,7 +265,7 @@ function downloadFile(file_url , targetPath, cID, ContentCount){
 		fs.unlinkSync(targetPath);
 	}
 	var total_bytes;
-	progress(request({
+	var stream = progress(request({
         method: 'GET',
 		uri: file_url,
 		timeout: 5000
@@ -280,10 +293,12 @@ function downloadFile(file_url , targetPath, cID, ContentCount){
 		//     } 
 		// } 
 		console.log('progress', state);
+		app.showExitPrompt = true;
 		showProgress(state, cID);
 	})
 	.on('error', function (err) {
-		$('#info'+cID).html('Content #'+cID+' is failed to download.<br><button id="redownload" class="mdl-button mdl-js-button mdl-button--primary">Redownload</button>');
+		$('#done'+cID).html('');
+		$('#info'+cID).html('Content #'+cID+' download process is interrupted. Internet connection failed.<br><button id="redownload" class="mdl-button mdl-js-button mdl-button--primary">Redownload</button>');
 		$('#info'+cID+' #redownload').on('click', function(){
 			if (fs.existsSync(targetPath)) {fs.unlinkSync(targetPath);}
 			choiceHandle(file_url , targetPath, cID, ContentCount, dldir);
@@ -292,6 +307,10 @@ function downloadFile(file_url , targetPath, cID, ContentCount){
 		app.showExitPrompt = false;
 	})
 	.on('end', function () {
+		//Use stream.on('finish',...) instead.
+	})
+	.pipe(fs.createWriteStream(targetPath));
+	stream.on('finish', function () {
 		var checkValid = validFileCheck(targetPath,total_bytes);
 		if (checkValid == true){
 			$('#info'+cID).hide();
@@ -308,8 +327,7 @@ function downloadFile(file_url , targetPath, cID, ContentCount){
 			$('#info'+cID).show();
 		}
 		app.showExitPrompt = false;
-	})
-	.pipe(fs.createWriteStream(targetPath));
+	});
 }
 
 function showProgress(state, cID){
@@ -330,9 +348,11 @@ var cIDtotal = [];
 function checkFinished(cID, ContentCount){
 	cIDtotal.push(cID);
 	if(cIDtotal.length==ContentCount){
+		app.showExitPrompt = true;
 		$('#content').append('<div id="makecia" class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--12-col listing">All tasks finished. Executing make_cdn_cia.exe. It will take long if the cia file is large...</div>');
 		tempCiaDir = path.join(basedir,'cias',tempfilename);
 		ciaDir = path.join(basedir,'cias',filename);
+		console.log(app.showExitPrompt);
 		makecia(makeciadir, dldir, tempCiaDir, ciaDir);
 	}
 }
@@ -357,7 +377,7 @@ function processDownloadTitle(results,data) {
 		}
 		addEtkCache['status'] = 'done';
 		try {
-			fs.writeFileSync(path.join(basedir, 'etkCache.json'), JSON.stringify(addEtkCache));
+			fs.writeFileSync(path.join(app.getPath('userData'), 'etkCache.json'), JSON.stringify(addEtkCache));
 		}
 		catch (err){
 			console.log(err);
@@ -481,10 +501,8 @@ function processDownload(event, receivedData){
 		$("#titleid").html(data.titleID);
 	}
 	/* Get home directory */
-	homedir = app.getPath('home');
 	
 	/* Generate app's directories */
-	basedir = path.join(homedir, 'Villain3DS');
 	if(os.platform()=='win32') {
 		makeciadir = path.join(basedir,'make_cdn_cia.exe')
 	} else if(os.platform()=='linux')  {
@@ -497,19 +515,9 @@ function processDownload(event, receivedData){
 	dldir = path.join(rawdir,data.titleID);
 	ciadir = path.join(basedir,'cias');
 	
-	/* Create dir if not exist */
-	if (!fs.existsSync(basedir)){
-		fs.mkdirSync(basedir);
-	}
-	if (!fs.existsSync(rawdir)){
-		fs.mkdirSync(rawdir);
-	}
-	if (!fs.existsSync(dldir)){
-		fs.mkdirSync(dldir);
-	}
-	if (!fs.existsSync(path.join(basedir,'cias'))){
-		fs.mkdirSync(path.join(basedir,'cias'));
-	}
+	fs.ensureDirSync(rawdir);
+	fs.ensureDirSync(dldir);
+	fs.ensureDirSync(ciadir);
 
 	$('#dldir').html(dldir);
 	$('#showinfm').on('click',function (){shell.showItemInFolder(dldir)});
