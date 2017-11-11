@@ -1,6 +1,6 @@
 {
   "name": "Villain3DS",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Download 3DS games to your PC as .cia files.",
   "main": "main.js",
   "scripts": {

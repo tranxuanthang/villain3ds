@@ -114,16 +114,17 @@ function hex2binArr(inputhex){
 }
 
 function makecia(makeciadir, rawdir, tempciadir, ciadir){
-	execute('"'+makeciadir+'" "'+rawdir+'" "'+tempciadir+'"', function(output) {
-		console.log('"'+makeciadir+'" "'+rawdir+'" "'+tempciadir+'"');
+	let command = '"'+makeciadir+'" "'+rawdir+'" "'+tempciadir+'"';
+	execute(command, function(output) {
+		console.log(command);
 		console.log(output);
 		output = output.replace(/(?:\r\n|\r|\n)/g, '<br />');
-		$('#makecia').html(''+makeciadir+' "'+rawdir+'" "'+tempciadir+'"'+'<br>'+output+'');
+		$('#makecia').html(command+'<br>'+output+'');
 		if (fs.existsSync(tempciadir)) {
 			fs.renameSync(tempciadir,ciadir);
 			$('#content').append('<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--12-col listing">'
 			+'Renamed <span class="mdl-chip"><span class="mdl-chip__text">'+tempfilename+'</span></span> to <span class="mdl-chip"><span class="mdl-chip__text">'+filename+'</span></span>'
-			+'<br>Everything finished.</div>');
+			+'<br>Everything is finished.</div>');
 		} else {
 			$('#content').append('<div class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--12-col listing">Too bad. Something\'s wrong ;-(.</div>');
 		}
@@ -341,8 +342,7 @@ function showProgress(state, cID){
 	var speed = humanFileSize(rawSpeed,true);
 
 	var rawEta = parseInt(state.time.remaining);
-	console.log(rawEta);
-	if(!rawEta)rawEta = 0;
+	if(!rawEta || rawEta == NaN)rawEta = 0;
 	var remainingTime = moment.duration(rawEta, 'seconds').humanize();
 	
     //console.log(percentage + "% | " + received + " bytes out of " + total + " bytes.");
@@ -357,11 +357,9 @@ var cIDtotal = [];
 function checkFinished(cID, ContentCount){
 	cIDtotal.push(cID);
 	if(cIDtotal.length==ContentCount){
-		app.showExitPrompt = true;
 		$('#content').append('<div id="makecia" class="mdl-color--white mdl-color-text--grey-800 mdl-cell mdl-cell--12-col listing">All tasks finished. Executing make_cdn_cia.exe. It will take long if the cia file is large...</div>');
 		tempCiaDir = path.join(basedir,'cias',tempfilename);
 		ciaDir = path.join(basedir,'cias',filename);
-		console.log(app.showExitPrompt);
 		makecia(makeciadir, dldir, tempCiaDir, ciaDir);
 	}
 }
