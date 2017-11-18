@@ -82,16 +82,15 @@ input, button, textarea, :focus {
 }
 a:not([draggable=true]), img:not([draggable=true]) {
     -webkit-user-drag: none;
-    user-drag: none; /* Technically not supported in Electron yet */
 }
 a[href^="http://"],
 a[href^="https://"],
 a[href^="ftp://"] {
     -webkit-user-drag: auto;
-    user-drag: auto; /* Technically not supported in Electron yet */
 }
 .allow-select , .allow-select img{
-	-webkit-user-select: auto;
+    -webkit-user-select: auto;
+    user-select: auto;
 }
 .allow-drag, .allow-drag img {
 	-webkit-user-drag: auto;
@@ -183,4 +182,12 @@ a[href^="ftp://"] {
 }
 .title-info-column {
     padding: .5rem;
+}
+.cdlevel:not(:last-child){
+    margin-bottom: .2rem;
+}
+@media screen and (max-width: 768px){
+    .cdlevel-left+.cdlevel-right {
+        margin-top: .2rem;
+    }
 }

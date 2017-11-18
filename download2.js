@@ -63,8 +63,8 @@ const newTitleTemplate =
 
 const newContentTemplate = 
 '<div class="title-content" id="{{content-id}}">'
-    +'<div class="content-title allow-select allow-drag">Content: {{content-id}}</div><div class="download-control"></div>'
-    +'<progress class="progress is-primary" value="0" max="100"></progress>'
+    +'<div class="level cdlevel"><div class="content-title allow-select allow-drag level-left cdlevel-left">Content: {{content-id}}</div><div class="level-right cdlevel-right"><div class="download-control level-item"></div></div></div>'
+    +'<progress class="progress is-primary is-small" value="0" max="100"></progress>'
     +'<div class="content-status allow-select allow-drag">{{content-progress}}</div>'
 +'</div>';
 
@@ -328,8 +328,9 @@ async function addNewDownload(event,receivedData){
             let view = {"content-id": cID};
             $('#'+titleData.titleID+' .card-content').append(Mustache.render(newContentTemplate, view));
 
-            await contentTask.push(createContentDlTask('http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/'+titleData.titleID+'/'+cID, path.join(dldir,cID), cID, contentCount, dldir,titleData.titleID));
+            await contentTask.push(dlTaskHandler('http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/'+titleData.titleID+'/'+cID, path.join(dldir,cID), cID, contentCount, dldir,titleData.titleID));
         }
+        console.log(contentTask);
         async function contentDownloadTask(){
             try {
                 await Promise.all(contentTask).then(function(){
@@ -423,8 +424,39 @@ async function createCetk(cetkTitleId, cetkTitleKey,dldir){
 	}
 }
 
+function dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload = false){
+    return new Promise(function(resolve,reject){
+    
+
+    let progressElement = $('#'+titleId+' #'+cID+' .content-status');
+    let progressBar = $('#'+titleId+' #'+cID+' .progress');
+    let downloadControl = $('#'+titleId+' #'+cID+' .download-control');
+
+    downloadControl.html(
+        '<a class="button is-link is-small download-play" disabled><span class="icon is-small"><i class="ion-play"></i></span></a>'
+        +'<a class="button is-link is-small download-pause" disabled><span class="icon is-small"><i class="ion-pause"></i></span></a>'
+        +'<a class="button is-link is-small download-destroy" disabled><span class="icon is-small"><i class="ion-close"></i></span></a>'
+    );
+    function disableAllButton(){
+        $('#'+titleId+' #'+cID+' .download-control').children('.download-play, .download-pause, .download-destroy').attr('disabled','disabled');
+    }
+    createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload)
+    .then(function(){
+        resolve();
+    })
+    .catch(function(error){
+        if('Error: Destroyed by user.') redownload = true;
+        $('#'+titleId+' #'+cID+' .download-control').show();
+        disableAllButton();
+        $('#'+titleId+' #'+cID+' .download-control').children('.download-play').removeAttr('disabled');
+        $('#'+titleId+' #'+cID+' .download-play').on('click',function(){
+            dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload);
+        });
+    });
+    });
+}
 /* Create the content download */
-function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, titleId){
+function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload){
     return new Promise(function(resolve,reject){
         let num = cID;
         let progressElement = $('#'+titleId+' #'+cID+' .content-status');
@@ -438,10 +470,12 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
         );
         
         
-        if(fs.existsSync(contentPath+'.mtd')){
+        if(fs.existsSync(contentPath+'.mtd') && redownload == false && fs.statSync(contentPath+'.mtd').size>0){
+            console.log('found mtd file')
             var dl = downloader.resumeDownload(contentPath);
             dl.start();
         } else {
+            console.log('NOT found mtd file')
             var dl = downloader.download(contentUrl, contentPath);
             dl.start();
         }
@@ -452,7 +486,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
         $('#'+titleId+' #'+cID+' .download-pause').on('click',function(){
             dl.stop();
         });
-        $('#'+titleId+' #'+cID+' .download-destroy').on('click',function(){
+        $('#'+titleId+' #'+cID+' .download-destroy').on('click',async function(){
             dl.destroy();
         });
 
@@ -475,15 +509,15 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
             range: '0-100',  // Default: 0-100, Control the part of file that needs to be downloaded.
         });
         dl.on('error',function(){
-            reject();
+            //reject();
         });
         let timer = setInterval(function() {
             if(dl.status == 0) {
                 disableAllButton();
                 let stats = dl.getStats();
                 let totalSize = humanFileSize (stats.total.size,true);
-                progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-warning');
-                progressElement.text('Preparing to download... '+totalSize);
+                progressBar.val(0).removeClass('is-primary is-warning is-danger is-success').addClass('is-warning');
+                progressElement.text('Preparing to download...');
             } else if(dl.status == 1) {
                 let stats = dl.getStats();
                 //console.log(stats);
@@ -506,9 +540,10 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
                 resolve();
             } else if(dl.status == -1) {
                 progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
-                progressElement.text('Content #'+ num +' is failed to download ('+ dl.error+'). Reopen this window may resume this download.');
+                progressElement.text('Content #'+ num +' is failed to download ('+ dl.error+').');
                 disableAllButton();
                 hideButtons();
+                reject(dl.error);
             } else if(dl.status == -2) {
                 progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-warning');
                 progressElement.text('Paused.');
@@ -516,7 +551,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
                 $('#'+titleId+' #'+cID+' .download-control').children('.download-play, .download-destroy').removeAttr('disabled');
             } else if(dl.status == -3) {
                 progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger').val(100);
-                progressElement.text('Destroyed by user. Reopen this window to redownload.');
+                progressElement.text('Destroyed by user.');
                 disableAllButton();
                 hideButtons();
                 reject('Error: Destroyed by user.');
