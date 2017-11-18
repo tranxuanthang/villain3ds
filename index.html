@@ -121,7 +121,7 @@
             </section>
             <footer class="buttons modal-card-foot is-right">
                 <button id="download-button" data-titleID="" data-encTitleKey="" class="button is-success">Download</button>
-                <button class="button dialog-close">Close</button>
+                <button class="button is-primary dialog-close">Close</button>
             </footer>
 			<div class="already-downloading-notif notification is-warning bottom-notif" style="display:none;">
 				This title is already downloading.
@@ -161,7 +161,7 @@
 									<p class="control is-expanded">
 										<input id="basedirpath" class="input" type="text">
 									</p>
-									<div class="control"><a id="basedirpathselect" class="button">Select</a></div>
+									<div class="control"><a id="basedirpathselect" class="button is-primary">Select</a></div>
 								</div>
 								<p class="help is-warning">If changed, this option will not delete the old directory, so you might want to manually clean it yourself later.</p>
 						</div>
@@ -190,7 +190,7 @@
 			</section>
 			<footer class="buttons modal-card-foot is-right">
 				<button id="config-save" class="button is-success" type="submit">Save</button>
-				<a class="button dialog-close">Close</a>
+				<a class="button is-primary dialog-close">Close</a>
 			</footer>
 			<div class="config-saved-notif notification is-success bottom-notif" style="display:none;">
 				All changes saved. You might need to restart the application.
@@ -209,22 +209,22 @@
 				<div class="info">
 					<p>
 						<strong>Villain3DS Desktop</strong><br>
-						Download 3DS games to your PC as .cia files.<br>
-						Version: <span id="curr-ver">#.#.#</span>
+						<span class="allow-select allow-drag">Download 3DS games to your PC as .cia files.</span><br>
+						Version: <span class="allow-select allow-drag" id="curr-ver">#.#.#</span>
 					</p>
 					<p class="info">
-						You might want to clean the raw directory (contains pending/unfinished downloads). 
-						Remember that raw files of any finished downloads will be cleaned automatically.<br>
-						Don't do this if any download process is running or something will go wrong.<br>
-						<a class="button" id="cleanrawdir">Clean raw directory</a>
-						<a class="button" id="openrawdir">Open raw directory</a>
-						<a class="button" id="openciasdir">Open saved cias directory</a>
+						You might want to clean the raw directory (contains pending/unfinished downloads).
+						<br>
+						Don't do this if the application is downloading any titles.<br>
+						<a class="button is-primary" id="cleanrawdir">Clean raw directory</a>
+						<a class="button is-primary" id="openrawdir">Open raw directory</a>
+						<a class="button is-primary" id="openciasdir">Open saved cias directory</a>
 					</p>
 					<p class="info" id="check-newer-version"></p>
 				</div>
 			</section>
 			<footer class="buttons modal-card-foot is-right">
-				<button class="button dialog-close">Close</button>
+				<button class="button is-primary dialog-close">Close</button>
 			</footer>
 			<div class="rawdir-cleaned-notif notification is-success bottom-notif" style="display:none;">
 				Raw directory is cleaned.

@@ -196,13 +196,21 @@ function checkNewVersion() {
 	console.log(queryUrl);
 	$.getJSON(queryUrl, function(data){
 		if(data.has_newer_version==1){
-			$('#check-newer-version').html('Newer version is available.<br>Newest version: '+data.newest_version+'<br><a id="openDownlUrl" href="#">Go to download URL</a>');
+			$('#check-newer-version').html(
+				'Newer version is available.<br>Newest version: <span class="class="allow-select allow-drag">'+data.newest_version+'</span>'
+				+'<br><a id="openDownlUrl" href="#">Go to download URL</a>'
+				+'<br>Message: <span class="allow-select allow-drag">'+data.message+'</span>'
+			);
 			$('#openDownlUrl').on('click',function(){
 				console.log('open update url once');
 				shell.openExternal(data.update_url);
 			});
 		} else {
-			$('#check-newer-version').html('Your app is up-to-date ;-)<br><a id="openDownlUrl" href="#">Go to download URL anyways</a>');
+			$('#check-newer-version').html(
+				'Your app is up-to-date ;-)'
+				+'<br><a id="openDownlUrl"href="#">Go to download URL anyways</a>'
+				+'<br>Message: <span class="allow-select allow-drag">'+data.message+'</span>'
+			);
 			$('#openDownlUrl').on('click',function(){
 				console.log('open update url once');
 				shell.openExternal(data.update_url);
