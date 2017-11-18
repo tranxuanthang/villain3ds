@@ -11,6 +11,7 @@
     "package-linux": "electron-packager . --overwrite --asar --platform=linux --arch=x64 --icon=img/icon.png --prune=true --out=../release-builds"
   },
   "devDependencies": {
+    "devtron": "^1.4.0",
     "electron": "^1.8.1",
     "electron-packager": "^9.1.0"
   },
@@ -20,6 +21,8 @@
     "fs": "0.0.1-security",
     "fs-extra": "^4.0.2",
     "moment": "^2.19.1",
+    "mt-files-downloader": "https://github.com/tranxuanthang/node-mt-files-downloader/",
+    "mustache": "^2.3.0",
     "os": "^0.1.1",
     "path": "^0.12.7",
     "request": "^2.83.0",

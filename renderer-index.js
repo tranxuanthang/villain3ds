@@ -4,7 +4,7 @@ const {dialog} = require('electron').remote;
 var ipcRenderer = require('electron').ipcRenderer;
 const Store = require('./js/store.js');
 const path = require('path')
-var fs = require('fs');
+var fs = require('fs-extra');
 const shell = require('electron').shell;
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
@@ -241,16 +241,33 @@ $('#config-button').on('click', function() {
 $('#about-button').on('click', function() {
 	$('.modal-about').addClass('is-active');
 	checkNewVersion();
+	let basePath = store.get('baseDirectory');
+	let rawdir = path.join(basePath,'raw');
+	let ciadir = path.join(basePath,'cias');
+	$('#cleanrawdir').on('click', function(){
+		fs.removeSync(rawdir);
+		fs.ensureDirSync(rawdir);
+		$('.rawdir-cleaned-notif').fadeIn().delay(1200).fadeOut();
+	});
+	$('#openrawdir').on('click', function(){
+		shell.showItemInFolder(rawdir);
+	});
+	$('#openciasdir').on('click', function(){
+		shell.showItemInFolder(ciadir);
+	});
 });
 
-$('.modal-config .dialog-close, .modal-config .modal-background').on('click', function() {
+$('.modal-config').find('.dialog-close').on('click', function() {
 	$('.modal').removeClass('is-active');
 	$('#config-form').attr("disabled", true);
 	$('#basedirpathselect').off('click');
 });
 
-$('.modal-about .dialog-close, .modal-about .modal-background').on('click', function() {
+$('.modal-about').find('.dialog-close').on('click', function() {
 	$('.modal').removeClass('is-active');
+	$('#cleanrawdir').off('click');
+	$('#openrawdir').off('click');
+	$('#openciasdir').off('click');
 });
 
 $("#config-save").click(function(e){

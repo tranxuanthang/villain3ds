@@ -78,7 +78,7 @@ html { overflow-y: hidden; }
     user-select: none;
 }
 input, button, textarea, :focus {
-    outline: none; // You should add some other style for :focus to help UX/a11y
+    outline: none;
 }
 a:not([draggable=true]), img:not([draggable=true]) {
     -webkit-user-drag: none;
@@ -138,4 +138,49 @@ a[href^="ftp://"] {
     background-color: #1b2833;
     border-color: #17222b;
     box-shadow: 0 0 0 0 rgba(134,148,164,0);
+}
+.card {
+    margin-bottom: 1.2rem;
+}
+.progress:not(:last-child) {
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+}
+.title-content {
+    border-left: 0.2rem solid #122130;
+    background-color: #1b2733;
+    margin: 0.4rem 0 0.4rem 0;
+    padding: 0.4rem;
+}
+.content-status{
+    line-height: 1.3;
+}
+.box {
+    box-shadow: none;
+}
+.card {
+    border: 1px solid #1a2531;
+    background-color: #1d2a38;
+    border-radius: 0;
+}
+
+.mcc-output{
+    margin: 0.6rem;
+}
+
+.mcc-result{
+    margin: 0.6rem 0 0.6rem 0;
+}
+
+.mcc-result p{
+    margin-bottom: 0.4rem;
+}
+.predownload-info {
+    margin-bottom: 0.4rem;
+}
+.title-info-columns:not(:last-child) {
+    margin-bottom: .2rem;
+}
+.title-info-column {
+    padding: .5rem;
 }

@@ -12,7 +12,7 @@
         <!-- Insert this line after script imports -->
         <script>if (window.module) module = window.module;</script>
         <link rel="stylesheet" href="./css/bulmaswatch-villain.css">
-		<link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+		<link rel="stylesheet" href="./css/ionicons.css">
         <link rel="stylesheet" href="./css/custom.css">
     </head>
     <body>
@@ -133,7 +133,7 @@
     </div>
 	
 	<div class="modal modal-config">
-		<div class="modal-background"></div>
+		<div class="modal-background dialog-close"></div>
 		<div class="modal-card">
 			<header class="modal-card-head">
 				<div class="modal-card-title">Config</div>
@@ -199,22 +199,36 @@
 	</div>
 
 	<div class="modal modal-about">
-		<div class="modal-background"></div>
+		<div class="modal-background dialog-close"></div>
 		<div class="modal-card">
 			<header class="modal-card-head">
 				<div class="modal-card-title">About</div>
 				<button class="delete dialog-close" aria-label="close"></button>
 			</header>
 			<section class="modal-card-body">
-				<div class="info"><p><strong>Villain3DS Desktop</strong><br>
-				Download 3DS games to your PC as .cia files.<br>
-				Version: <span id="curr-ver">#.#.#</span</p>
-				<p class="info" id="check-newer-version"></p>
+				<div class="info">
+					<p>
+						<strong>Villain3DS Desktop</strong><br>
+						Download 3DS games to your PC as .cia files.<br>
+						Version: <span id="curr-ver">#.#.#</span>
+					</p>
+					<p class="info">
+						You might want to clean the raw directory (contains pending/unfinished downloads). 
+						Remember that raw files of any finished downloads will be cleaned automatically.<br>
+						Don't do this if any download process is running or something will go wrong.<br>
+						<a class="button" id="cleanrawdir">Clean raw directory</a>
+						<a class="button" id="openrawdir">Open raw directory</a>
+						<a class="button" id="openciasdir">Open saved cias directory</a>
+					</p>
+					<p class="info" id="check-newer-version"></p>
 				</div>
 			</section>
 			<footer class="buttons modal-card-foot is-right">
 				<button class="button dialog-close">Close</button>
 			</footer>
+			<div class="rawdir-cleaned-notif notification is-success bottom-notif" style="display:none;">
+				Raw directory is cleaned.
+			</div>
 		</div>
 	</div>
     <script>

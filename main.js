@@ -141,7 +141,7 @@ app.on('activate', function () {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 var downloadWindow = new Array();
-app.showExitPrompt = true;
+app.showExitPrompt = false;
 const ipcMain = electron.ipcMain;
 ipcMain.on('download-title', function(event, data){
 	if(typeof downloadWindow[data.titleID] === 'undefined'){
@@ -149,26 +149,24 @@ ipcMain.on('download-title', function(event, data){
 			width: 900, height: 500, minWidth: 640, minHeight: 300, icon: __dirname + '/img/icon.png'
 		});
 		downloadWindow[data.titleID].loadURL(url.format({
-			pathname: path.join(__dirname, 'download.html'),
+			pathname: path.join(__dirname, 'download2.html'),
 			protocol: 'file:',
 			slashes: true
 		}));
-		console.log(path.join(__dirname, 'download.html')+'?titleID='+data.titleID+'&name='+data.name+'&region='+data.region);
 		downloadWindow[data.titleID].on('closed', function () {
 			downloadWindow[data.titleID] = null;
 			delete downloadWindow[data.titleID];
 		});
-		console.log('loaded, '+data.encTitleKey);
-		function daibang(arg){
-			downloadWindow[data.titleID].webContents.send('download-title', arg);
-		}
-		ipcMain.once('dlprocess-ready', (event) => {
-			daibang(data);
+		console.log('loaded, '+data.titleID);
+
+		ipcMain.once('dlprocess-ready', function(event){
+			downloadWindow[data.titleID].webContents.send('download-title', data);
+			ipcMain.removeListener('dlprocess-ready',function (){
+				console.log('removed dlprocess-ready listener');
+			});
 			console.log('received ready from download process');
-			ipcMain.removeListener('dlprocess-ready',function (){daibang(data)});
 		});
 		event.sender.send('status', 'started-downloading');
-		//event.returnValue = 'started-downloading';
 		
 		downloadWindow[data.titleID].on('close', (e) => {
 			
@@ -179,7 +177,7 @@ ipcMain.on('download-title', function(event, data){
 					type: 'question',
 					buttons: ['Yes', 'No'],
 					title: 'Unfinished download',
-					message: 'Contents that are partially downloaded can\'t be resumed (unless you\'re using the "download manager" method). Are you sure you want to close?'
+					message: 'Are you sure you want to close?'
 				}, function (response) {
 					if (response === 0) { // Runs the following if 'Yes' is clicked
 						app.showExitPrompt = false
@@ -191,16 +189,7 @@ ipcMain.on('download-title', function(event, data){
 	} else {
 		console.log('this title '+data.titleID+' is already downloading...');
 		event.sender.send('status', 'already-downloading');
-		//event.returnValue = 'already-downloading';
 	}
-	//setTimeout(function(){daibang(data)},1000);
-});
-
-ipcMain.on('get-homedir', (event) => {
-    // Print 1
-    homePath = app.getPath('home');
-    // Reply on async message from renderer process
-    event.returnValue = homePath;
 });
 
 function logEverywhere(s) {

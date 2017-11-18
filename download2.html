@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Download</title>
+
+        <!-- Insert this line above script imports  -->
+	    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+        <!-- normal script imports etc  -->
+        <script src="js/jquery-3.2.1.min.js"></script>
+        <!-- Insert this line after script imports -->
+        <script>if (window.module) module = window.module;</script>
+        <link rel="stylesheet" href="./css/bulmaswatch-villain.css">
+		<link rel="stylesheet" href="./css/ionicons.css">
+        <link rel="stylesheet" href="./css/custom.css">
+    </head>
+    <body>
+        <nav class="navmain navbar is-primary" role="navigation" aria-label="main navigation">
+            <div class="container">
+                <div style="width:100%;">
+                    <div class="navbar-brand" style="float: left;">
+                        <div class="navbar-item" style="font-weight:bold">Download Overview</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="main-content">
+            <section class="section3">
+                <div class="container">
+                    <div class="columns">
+                        <div class="column is-one-third">
+                                <div class="card">
+                                    <header class="card-header">
+                                        <p class="card-header-title">
+                                            Information
+                                        </p>
+                                    </header>
+                                    <div class="card-content">
+                                        <div class="predownload-info"><strong>make_cdn_cia status:</strong><br><span class="allow-select allow-drag" id="mcc">#</span></div>
+                                        <div class="predownload-info"><strong>encTitleKeys.bin status:</strong><br><span class="allow-select allow-drag" id="etkbin">#</span></div>
+                                        <div class="predownload-info">
+                                            <div><strong>Directory for raw files:</strong></div>
+                                            <div class="field has-addons">
+                                                <div class="control"><input id="dldir" class="input" type="text" readonly></div>
+                                                <div class="control">
+                                                    <a class="button is-primary" id="opendldir">
+                                                        <span class="icon is-small"><i class="ion-eye"></i></span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="predownload-info">
+                                            <div><strong>Directory for saving CIAs:</strong></div>
+                                            <div class="field has-addons">
+                                                <div class="control"><input id="ciadir" class="input" type="text" readonly></div>
+                                                <div class="control">
+                                                    <a class="button is-primary" id="openciadir">
+                                                        <span class="icon is-small"><i class="ion-eye"></i></span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="download-section column is-two-third">
+                            <div class="card predownload">
+                                <div class="card-content" id="progress">
+                                    <div id="mcc-check" class="allow-select allow-drag" style="display:none;">#</div>
+                                    <div id="etkbin-check" class="allow-select allow-drag" style="display:none;">#</div>
+                                    <div id="check-requirement" class="allow-select allow-drag" style="display:none;">#</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <script>
+            // You can also require other files to run in this process
+            require('./download2.js')
+        </script>
+    </body>
+</html>
