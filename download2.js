@@ -445,7 +445,7 @@ function dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleI
         resolve();
     })
     .catch(function(error){
-        if('Error: Destroyed by user.') redownload = true;
+        if(error == 'error_destroyed_by_user') redownload = true;
         $('#'+titleId+' #'+cID+' .download-control').show();
         disableAllButton();
         $('#'+titleId+' #'+cID+' .download-control').children('.download-play').removeAttr('disabled');
@@ -561,7 +561,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
                 progressElement.text('Destroyed by user.');
                 disableAllButton();
                 hideButtons();
-                reject('Error: Destroyed by user.');
+                reject('error_destroyed_by_user');
             }
 
             if(dl.status === -1 || dl.status === 3 || dl.status === -3) {
