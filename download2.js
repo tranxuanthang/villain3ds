@@ -473,13 +473,16 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
         if(fs.existsSync(contentPath+'.mtd') && redownload == false && fs.statSync(contentPath+'.mtd').size>0){
             console.log('found mtd file')
             var dl = downloader.resumeDownload(contentPath);
-            dl.start();
         } else {
             console.log('NOT found mtd file')
             var dl = downloader.download(contentUrl, contentPath);
+        }
+        if(fs.existsSync(contentPath)){
+            dl.status = 3;
+            dl.alreadydownloaded = true;
+        } else {
             dl.start();
         }
-        
         $('#'+titleId+' #'+cID+' .download-play').on('click',function(){
             dl.resume();
         });
@@ -534,7 +537,11 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
                 disableAllButton();
             } else if(dl.status == 3) {
                 progressBar.val(100).removeClass('is-primary is-warning is-danger is-success').addClass('is-success');
-                progressElement.text('Content #'+ num +' is successfully downloaded.');
+                if(dl.alreadydownloaded == true){
+                    progressElement.text('Content #'+ num +' is already downloaded before.');
+                } else {
+                    progressElement.text('Content #'+ num +' is successfully downloaded.');
+                }
                 disableAllButton();
                 hideButtons();
                 resolve();
@@ -568,7 +575,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
 
 function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName){
     let command = '"'+makeCiaDir+'" "'+rawFileDir+'" "'+tempCiaDir+'"';
-    $('#'+titleId+' .card-content').append('<div class="mcc-execute"><div class="mcc-result">Executing make_cdn_cia...</div><div class="mcc-output content is-small"></div></div>');
+    $('#'+titleId+' .card-content').append('<div class="mcc-execute"><div class="mcc-result">Executing make_cdn_cia...</div><div class="mcc-output content is-small" style="font-family: monospace;"></div></div>');
 	execute(command, function(output) {
         output = output.replace(/(?:\r\n|\r|\n)/g, '<br />');
         $('#'+titleId+' .mcc-output').html('<p class="allow-select allow-drag">'+command+'</p><p class="allow-select allow-drag">'+output+'</p>');
