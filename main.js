@@ -79,16 +79,15 @@ if (fs.existsSync(targetPath)){
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow(
-	{
+  mainWindow = new BrowserWindow({
+    titleBarStyle: 'hidden-inset',
 	  width: 900, 
 	  height: 700, 
 	  minWidth: 760, 
 	  minHeight: 480,
 	  icon: __dirname + '/img/icon.png',
 	  backgroundColor: '#2b3e50'
-	}
-  )
+	})
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -112,7 +111,7 @@ function createWindow () {
   if (process.platform == 'win32') {
     // Keep only command line / deep linked arguments
     deeplinkingUrl = process.argv.slice(1)
-  }
+	}
 	
 	openDeepLinking(deeplinkingUrl,1);
 }

@@ -191,3 +191,11 @@ a[href^="ftp://"] {
         margin-top: .2rem;
     }
 }
+
+.navmain {
+    -webkit-app-region: drag;
+}
+
+.mac-inset {
+    padding-left: 70px;
+}
