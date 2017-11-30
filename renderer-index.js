@@ -220,6 +220,11 @@ function checkNewVersion() {
 	});
 }
 
+// [YB]: Add a slight padding to navbar on OSX:
+if (process.platform === 'darwin') {
+  $('.navmain').addClass('mac-inset');
+}
+
 $('#config-button').on('click', function() {
 	let showRegion = store.get('region');
 	let basePath = store.get('baseDirectory');
