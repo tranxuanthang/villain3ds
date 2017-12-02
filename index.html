@@ -85,7 +85,7 @@
                         <li class="info-tab is-active"><a onclick="switchToInfo()">Info</a></li>
                         <li class="desc-tab"><a onclick="switchToDesc()">Description</a></li>
                         <li class="src-tab"><a onclick="switchToScr()">Screenshots</a></li>
-						<!--<li class="qr-tab"><a onclick="switchToQr()">Qrcode</a></li>-->
+						<li class="qr-tab"><a onclick="switchToQr()">Qrcode</a></li>
                     </ul>
                 </div>
                 <div id="tab-content">
@@ -114,8 +114,9 @@
 							</div>
 						</div>
 					</div>
-					<div id="qr-tab-content" style="text-align: center;" class="hidden">
-						<img id="qr-image" alt="" style="height: 100%;" />
+					<div id="qr-tab-content" style="text-align: center; height: 100%;" class="hidden">
+						<div id="qr-info"></div>
+						<img id="qr-image" alt="" style="height: 98%;" />
 					</div>
                 </div>
             </section>

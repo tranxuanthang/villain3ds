@@ -6,6 +6,8 @@ const Store = require('./js/store.js');
 const path = require('path')
 var fs = require('fs-extra');
 const shell = require('electron').shell;
+var parsedEtkBin = new Object();
+
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
@@ -14,12 +16,30 @@ var storingData = {sort: 0, page: 0, keyword: ''};
 const store = new Store({
 	configName: 'config',
 	defaults: {
-	  enctitlekeysBinRemoteUrl: "",
-	  baseDirectory: path.join(app.getPath('home'), 'Villain3DS'),
-	  region: "all"
+		enctitlekeysBinRemoteUrl: "",
+		baseDirectory: path.join(app.getPath('home'), 'Villain3DS'),
+		region: "all"
 	}
-  });
+});
 
+var basedir = store.get('baseDirectory');
+var etkBinDir = path.join(basedir,'enctitlekeys.bin');
+function toHexString(byteArray) {
+    return Array.prototype.map.call(byteArray, function(byte) {
+        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+    }).join('');
+}
+function parseEtkBin(){
+	let etkBinFile = fs.readFileSync(etkBinDir);
+	let etkBinArrayBuffer = new Uint8Array(etkBinFile);
+	let etkBinArrayLength = etkBinArrayBuffer.length;
+	let i;
+	for(i = 16; i < etkBinArrayLength; i += 32){
+		let titleId = toHexString(etkBinArrayBuffer.slice(i+8 ,i+16));
+		let titleKey = toHexString(etkBinArrayBuffer.slice(i+16, i+32));
+		parsedEtkBin[titleId] = titleKey;
+	}
+}
 function showTitleInfo(data) {
 	console.log(queryUrl);
 	
@@ -35,6 +55,44 @@ function showTitleInfo(data) {
 	if (data.query.scrbot1!='none') $('#scrbot1').attr('src', data.query.scrbot1);
 	if (data.query.scrbot2!='none') $('#scrbot2').attr('src', data.query.scrbot2);
 	if (data.query.scrbot3!='none') $('#scrbot3').attr('src', data.query.scrbot3);
+	showQrCode(data);
+}
+
+async function showQrCode(data) {
+	if(!store.get('enctitlekeysBinRemoteUrl')){
+        $("#qr-info").show().text('You need to add an encTitleKeys.bin remote URL for the QRcode feature to work. Go to "Config" section to add one.');
+    } else {
+        let etkBinSuccess = true;
+        try {
+            if (!fs.existsSync(etkBinDir)) {
+                simpleDownload(store.get('enctitlekeysBinRemoteUrl'),etkBinDir);
+            } else {
+                let cleanTime = new Date(fs.statSync(etkBinDir).mtime);
+                cleanTime = cleanTime.setDate(cleanTime.getDate() + 2);
+                let currentTime = Date.now();
+                console.log(cleanTime - currentTime);
+                if(cleanTime < currentTime) {
+                    simpleDownload(store.get('enctitlekeysBinRemoteUrl'),etkBinDir);
+                }
+            }
+        }
+        catch(error){
+            $("#qr-info").show().text('Can\'t get encTitleKeys.bin ('+error+').');
+            if (!fs.existsSync(etkBinDir)) {
+                fs.unlinkSync(etkBinDir);
+            }
+            etkBinSuccess = false;
+        };
+        if(etkBinSuccess == true){
+            parseEtkBin();
+            $("#qr-info").hide();
+            
+            etkBinCheck = true;
+			let titlekey = parsedEtkBin[data.query.titleID];
+			//$("#qr-info").html('<img id="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=http%3A%2F%2F3ds.game4u.pro%2Ftikserv.php%3Ftitleid%3D'+data.query.titleID+'%26titlekey%3D'+titlekey+'" alt="" style="height:98%;" />');
+			$('#qr-image').attr("src",'https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=http%3A%2F%2F3ds.game4u.pro%2Ftikserv.php%3Ftitleid%3D'+data.query.titleID+'%26titlekey%3D'+titlekey+'');
+        }
+    }
 }
 
 function getTitleInfo(id) {
@@ -321,6 +379,8 @@ $('.modal-title .dialog-close, .modal-title .modal-background').on('click', func
 	$('#scrbot1').attr('src', 'img/blank320x240.png');
 	$('#scrbot2').attr('src', 'img/blank320x240.png');
 	$('#scrbot3').attr('src', 'img/blank320x240.png');
+
+	$('#qr-image').attr('src', 'img/blank400x400.png');
 });
 
 /* Click download button */
