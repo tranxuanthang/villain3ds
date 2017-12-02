@@ -6,8 +6,9 @@ const Store = require('./js/store.js');
 const path = require('path')
 var fs = require('fs-extra');
 const shell = require('electron').shell;
-var parsedEtkBin = new Object();
+var request = require('request');
 
+var parsedEtkBin = new Object();
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
@@ -28,6 +29,27 @@ function toHexString(byteArray) {
     return Array.prototype.map.call(byteArray, function(byte) {
         return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     }).join('');
+}
+function simpleDownload(simpleUrl,simplePath){
+    return new Promise(function (resolve,reject){
+        try{
+            let req = request({method: 'GET',uri: simpleUrl})
+            .on('end', function(chunk) {
+                console.log('done '+simpleUrl);
+            })
+            .on('error', function(error) {
+                reject(error);
+            })
+            .pipe(fs.createWriteStream(simplePath, {'flags': 'w'}));
+
+            req.on('finish',function(){
+                resolve();
+            });
+        }
+        catch(err){
+            reject(err);
+        }
+    });
 }
 function parseEtkBin(){
 	let etkBinFile = fs.readFileSync(etkBinDir);
