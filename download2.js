@@ -169,7 +169,13 @@ function simpleDownload(simpleUrl,simplePath){
             .pipe(fs.createWriteStream(simplePath, {'flags': 'w'}));
 
             req.on('finish',function(){
-                resolve();
+                let stats = fs.statSync(simplePath)
+                let fileSizeInBytes = stats["size"];
+                if(fileSizeInBytes!=0){
+                    resolve();
+                } else {
+                    reject();
+                }
             });
         }
         catch(err){
@@ -196,6 +202,10 @@ async function mccHandler(doCheck = false){
         mccHandlerSuccess = false;
     };
     if(mccHandlerSuccess == true){
+        //Make the make_cdn_cia file executable on linux and macOS
+        if(os.platform()=='linux' || os.platform()=='darwin'){
+            fs.chmodSync(makeCiaDir,'744');
+        }
         $('#mcc').text('Download completed');
         $("#mcc-check").html('').hide();
         mccCheck = true;
@@ -585,15 +595,14 @@ function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName
                 fs.renameSync(tempCiaDir,ciadir);
                 $('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Renamed <span class="tag is-primary allow-select allow-drag">'+tempFileName+'</span> to <span class="tag is-primary allow-select allow-drag">'+fileName+'</span>.<br>'
                 +'Everything is finished :)</p>');
+                fs.removeSync(rawFileDir);
             }
             catch (error){
                 $('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Too bad. Something\'s wrong ('+error+').</p>');
             }
-            
 		} else {
 			$('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Too bad. Something\'s wrong ;-(.</p>');
         }
-        fs.removeSync(rawFileDir);
 	});
 }
 

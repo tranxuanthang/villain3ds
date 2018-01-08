@@ -145,6 +145,7 @@ const ipcMain = electron.ipcMain;
 ipcMain.on('download-title', function(event, data){
 	if(typeof downloadWindow[data.titleID] === 'undefined'){
 		downloadWindow[data.titleID] = new BrowserWindow({
+			titleBarStyle: 'hidden-inset',
 			width: 900, height: 500, minWidth: 640, minHeight: 300, icon: __dirname + '/img/icon.png'
 		});
 		downloadWindow[data.titleID].loadURL(url.format({
