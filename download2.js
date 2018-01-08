@@ -169,6 +169,7 @@ function simpleDownload(simpleUrl,simplePath){
             .pipe(fs.createWriteStream(simplePath, {'flags': 'w'}));
 
             req.on('finish',function(){
+                fs.chmodSync(simplePath, '744');
                 resolve();
             });
         }
