@@ -213,15 +213,20 @@
 						<span class="allow-select allow-drag">Download 3DS games to your PC as .cia files.</span><br>
 						Version: <span class="allow-select allow-drag" id="curr-ver">#.#.#</span>
 					</p>
+					<p class="info"><strong>Update</strong><br><span id="check-newer-version"></span></p>
 					<p class="info">
+						<strong>Troubleshooting</strong><br>
 						You might want to clean the raw directory (contains pending/unfinished downloads).
 						<br>
 						Don't do this if the application is downloading any titles.<br>
 						<a class="button is-primary" id="cleanrawdir">Clean raw directory</a>
 						<a class="button is-primary" id="openrawdir">Open raw directory</a>
-						<a class="button is-primary" id="openciasdir">Open saved cias directory</a>
+						<a class="button is-primary" id="openciasdir">Open saved cias directory</a><br>
+						Use below buttons to clean some cached files.<br>
+						<a class="button is-primary" id="deletemcc">Delete make_cdn_cia file</a>
+						<a class="button is-primary" id="deleteetk">Delete encTitleKeys.bin file</a>
 					</p>
-					<p class="info" id="check-newer-version"></p>
+					
 				</div>
 			</section>
 			<footer class="buttons modal-card-foot is-right">
@@ -229,6 +234,12 @@
 			</footer>
 			<div class="rawdir-cleaned-notif notification is-success bottom-notif" style="display:none;">
 				Raw directory is cleaned.
+			</div>
+			<div class="etkfile-cleaned-notif notification is-success bottom-notif" style="display:none;">
+				encTitleKeys.bin file is cleaned.
+			</div>
+			<div class="mccfile-cleaned-notif notification is-success bottom-notif" style="display:none;">
+				make_cdn_cia file is cleaned.
 			</div>
 		</div>
 	</div>

@@ -5,6 +5,7 @@ var ipcRenderer = require('electron').ipcRenderer;
 const Store = require('./js/store.js');
 const path = require('path')
 var fs = require('fs-extra');
+var os = require('os');
 const shell = require('electron').shell;
 var request = require('request');
 
@@ -336,11 +337,29 @@ $('#about-button').on('click', function() {
 	checkNewVersion();
 	let basePath = store.get('baseDirectory');
 	let rawdir = path.join(basePath,'raw');
+	let etkdir = path.join(basePath,'enctitlekeys.bin');
+	/* Define make_cdn_cia location */
+	var makeCiaDir;
+	if(os.platform()=='win32') {
+		makeCiaDir = path.join(basedir,'make_cdn_cia.exe')
+	} else if(os.platform()=='linux')  {
+		makeCiaDir = path.join(basedir,'make_cdn_cia')
+	} else if(os.platform()=='darwin') {
+		makeCiaDir = path.join(basedir,'make_cdn_cia_macos')
+	}
 	let ciadir = path.join(basePath,'cias');
 	$('#cleanrawdir').on('click', function(){
 		fs.removeSync(rawdir);
 		fs.ensureDirSync(rawdir);
 		$('.rawdir-cleaned-notif').fadeIn().delay(1200).fadeOut();
+	});
+	$('#deletemcc').on('click', function(){
+		fs.removeSync(makeCiaDir);
+		$('.mccfile-cleaned-notif').fadeIn().delay(1200).fadeOut();
+	});
+	$('#deleteetk').on('click', function(){
+		fs.removeSync(etkdir);
+		$('.etkfile-cleaned-notif').fadeIn().delay(1200).fadeOut();
 	});
 	$('#openrawdir').on('click', function(){
 		shell.showItemInFolder(rawdir);

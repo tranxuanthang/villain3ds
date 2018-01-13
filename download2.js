@@ -495,7 +495,13 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
             dl.start();
         }
         $('#'+titleId+' #'+cID+' .download-play').on('click',function(){
-            dl.resume();
+            if(fs.existsSync(contentPath+'.mtd') && !fs.existsSync(contentPath) && fs.statSync(contentPath+'.mtd').size>0){
+                dl.resume();
+            } else if(fs.existsSync(contentPath) && !fs.existsSync(contentPath+'.mtd') && fs.statSync(contentPath).size>0) {
+                dl.setStatus(3);
+            } else {
+                dl.resume();
+            }
         });
         $('#'+titleId+' #'+cID+' .download-pause').on('click',function(){
             dl.stop();
@@ -516,7 +522,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
         });
         
         dl.setOptions({
-            threadsCount: 5, // Default: 2, Set the total number of download threads
+            threadsCount: 6, // Default: 2, Set the total number of download threads
             method: 'GET', 	 // Default: GET, HTTP method
             port: 80, 	     // Default: 80, HTTP port
             timeout: 5000,   // Default: 5000, If no data is received, the download times out (milliseconds)
@@ -589,13 +595,17 @@ function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName
     $('#'+titleId+' .card-content').append('<div class="mcc-execute"><div class="mcc-result">Executing make_cdn_cia...</div><div class="mcc-output content is-small" style="font-family: monospace;"></div></div>');
 	execute(command, function(output) {
         output = output.replace(/(?:\r\n|\r|\n)/g, '<br />');
-        $('#'+titleId+' .mcc-output').html('<p class="allow-select allow-drag">'+command+'</p><p class="allow-select allow-drag">'+output+'</p>');
-		if (fs.existsSync(tempCiaDir)) {
+        $('#'+titleId+' .mcc-output').html('<p class="result-note allow-select allow-drag">'+command+'</p><p class="allow-select allow-drag">'+output+'</p>');
+        let stats = fs.statSync(tempCiaDir);
+        let fileSizeInBytes = stats["size"];
+        if (fs.existsSync(tempCiaDir) && fileSizeInBytes!=0) {
             try{
                 fs.renameSync(tempCiaDir,ciadir);
                 $('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Renamed <span class="tag is-primary allow-select allow-drag">'+tempFileName+'</span> to <span class="tag is-primary allow-select allow-drag">'+fileName+'</span>.<br>'
-                +'Everything is finished :)</p>');
-                fs.removeSync(rawFileDir);
+                +'Everything is finished :)</p>'
+                +'<p class="allow-select allow-drag">The CIA file size is: '+humanFileSize(fileSizeInBytes,true)+'</p>');
+                
+                //fs.removeSync(rawFileDir);
             }
             catch (error){
                 $('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Too bad. Something\'s wrong ('+error+').</p>');
@@ -603,7 +613,13 @@ function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName
 		} else {
 			$('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Too bad. Something\'s wrong ;-(.</p>');
         }
-	});
+        $('#'+titleId+' .mcc-result').append('<p><a class="button is-primary is-small" id="openciafiledir">Open CIA directory</a> <a class="button is-primary is-small" id="cleanrawdir">Clean raw directory</a></p>');
+        $('#openciafiledir').on('click',function (){shell.showItemInFolder(ciadir)});
+        $('#cleanrawdir').on('click', function(){
+            fs.removeSync(rawFileDir);
+            $('#cleanrawdir').html('Cleaned').attr('disabled', true);
+        });
+    });
 }
 
 $(document).ready(function(){
