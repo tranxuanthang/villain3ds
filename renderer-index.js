@@ -8,7 +8,7 @@ var fs = require('fs-extra');
 var os = require('os');
 const shell = require('electron').shell;
 var request = require('request');
-
+var func = require('./js/func.js');
 var parsedEtkBin = new Object();
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
@@ -26,40 +26,15 @@ const store = new Store({
 
 var basedir = store.get('baseDirectory');
 var etkBinDir = path.join(basedir,'enctitlekeys.bin');
-function toHexString(byteArray) {
-    return Array.prototype.map.call(byteArray, function(byte) {
-        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-    }).join('');
-}
-function simpleDownload(simpleUrl,simplePath){
-    return new Promise(function (resolve,reject){
-        try{
-            let req = request({method: 'GET',uri: simpleUrl})
-            .on('end', function(chunk) {
-                console.log('done '+simpleUrl);
-            })
-            .on('error', function(error) {
-                reject(error);
-            })
-            .pipe(fs.createWriteStream(simplePath, {'flags': 'w'}));
 
-            req.on('finish',function(){
-                resolve();
-            });
-        }
-        catch(err){
-            reject(err);
-        }
-    });
-}
 function parseEtkBin(){
 	let etkBinFile = fs.readFileSync(etkBinDir);
 	let etkBinArrayBuffer = new Uint8Array(etkBinFile);
 	let etkBinArrayLength = etkBinArrayBuffer.length;
 	let i;
 	for(i = 16; i < etkBinArrayLength; i += 32){
-		let titleId = toHexString(etkBinArrayBuffer.slice(i+8 ,i+16));
-		let titleKey = toHexString(etkBinArrayBuffer.slice(i+16, i+32));
+		let titleId = func.toHexString(etkBinArrayBuffer.slice(i+8 ,i+16));
+		let titleKey = func.toHexString(etkBinArrayBuffer.slice(i+16, i+32));
 		parsedEtkBin[titleId] = titleKey;
 	}
 }
@@ -70,7 +45,7 @@ function showTitleInfo(data) {
 	$('#title-region').html(data.query.region);
 	$('#title-desc').html(data.query.desc);
 	$('#title-titleID').html(data.query.titleID);
-	$('#title-size').html(data.query.size);
+	$('#title-size').html(func.humanFileSize(data.query.size,true));
 	if (data.query.scrtop1!='none') $('#scrtop1').attr('src', data.query.scrtop1);
 	if (data.query.scrtop2!='none') $('#scrtop2').attr('src', data.query.scrtop2);
 	if (data.query.scrtop3!='none') $('#scrtop3').attr('src', data.query.scrtop3);
@@ -88,14 +63,14 @@ async function showQrCode(data) {
         let etkBinSuccess = true;
         try {
             if (!fs.existsSync(etkBinDir)) {
-                simpleDownload(store.get('enctitlekeysBinRemoteUrl'),etkBinDir);
+                func.simpleDownload(store.get('enctitlekeysBinRemoteUrl'),etkBinDir);
             } else {
                 let cleanTime = new Date(fs.statSync(etkBinDir).mtime);
                 cleanTime = cleanTime.setDate(cleanTime.getDate() + 2);
                 let currentTime = Date.now();
                 console.log(cleanTime - currentTime);
                 if(cleanTime < currentTime) {
-                    simpleDownload(store.get('enctitlekeysBinRemoteUrl'),etkBinDir);
+                    func.simpleDownload(store.get('enctitlekeysBinRemoteUrl'),etkBinDir);
                 }
             }
         }
@@ -138,13 +113,13 @@ function sendDownloadRequest() {
 
 function showListing(param,sort,page,keyword) {
 	return function (data) {
-		param.hide();
-		param.empty();
+		param.hide().empty();
 		$('.error').html('');
+		var appendTitleList = '';
 		for (var i = 0; i < data.query.length; i++) {
 			if(data.query[i].icon == "none")iconUrl = './img/blank.png'; else iconUrl = data.query[i].icon;
-			param.append(
-			'<div id="item-'+i+'" class="column is-one-third-mobile is-one-quarter-tablet"><div class="box" style="height: 100%;"><article class="media">'
+			appendTitleList +=
+			'<div id="item-'+i+'" class="column is-one-third-mobile is-one-quarter-tablet"><div class="box"><article class="media">'
 				+'<div class="media-left">'
 					+'<img src="'+iconUrl+'" style="width: 37px" border="0" alt="">'
 				+'</div>'
@@ -152,11 +127,12 @@ function showListing(param,sort,page,keyword) {
 					+'<div class="mdl-card__title"><h3 class="mdl-card__title-text">'
 					+'<a href="#" data-id="'+data.query[i].id+'" class="title-link show-modal">'+data.query[i].name+'</a>'
 					+'</h2></div>'
-					+'<div class="desc">'+data.query[i].region+' | '+data.query[i].type+'<br>'+data.query[i].size+'</div>'
+					+'<div class="desc">'+data.query[i].region+' | '+data.query[i].type+' | '+func.humanFileSize(data.query[i].size,true)+'</div>'
 				+'</div>'
-			+'</article></div></div>');
+			+'</article></div></div>';
 			//$('#item-'+i).fadeIn('fast');
 		}
+		param.append(appendTitleList);
 		//if(i=data.query.length-1)$('#loading').fadeOut();
 		param.fadeIn('fast');
 		console.log('Request listing: '+queryUrl);
@@ -192,6 +168,7 @@ function getListing(param,sort,page,keyword) {
 	
 	$.getJSON(queryUrl, showListing(param,sort,page,keyword)).done(function(d) {
 		//$('#loading').fadeOut();
+		$(".main-content").animate({ scrollTop: 0 }, "slow");
 	}).fail(function(d) {
 		$('.error').html('<section class="hero is-dark"><div class="hero-body"><div class="container">'
 			+'<h1 class="title">Oops. Something is wrong</h1>'

@@ -1,3 +1,6 @@
 node_modules/
 npm-debug.log
 package-lock.json
+make_cdn_cia
+make_cdn_cia.exe
+make_cdn_cia_macos

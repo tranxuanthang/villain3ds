@@ -60,11 +60,12 @@ html { overflow-y: hidden; }
 .media-left {
     margin-right: 0.5rem;
 }
-.box {
-    padding: 0.95rem;
-}
 .desc {
-    font-size: small;
+    font-size: 76%;
+    position: absolute;
+    bottom: 6px;
+    right: 12px;
+    color: #6a7b88;
 }
 #title-name{
     overflow: hidden;
@@ -155,7 +156,11 @@ a[href^="ftp://"] {
     line-height: 1.3;
 }
 .box {
+    padding: 0.95rem;
     box-shadow: none;
+    position: relative;
+    height: 100px;
+    background-color: #233241;
 }
 .card {
     border: 1px solid #1a2531;
@@ -164,11 +169,19 @@ a[href^="ftp://"] {
 }
 
 .mcc-output{
-    margin: 0.6rem;
+    margin: 0.6rem 0 0.6rem 0;
+    border: 1px solid #122130;
+    border-radius: 5px;
+    background-color: #1b2733;
+    padding: 0.4rem;
 }
 
 .mcc-result{
     margin: 0.6rem 0 0.6rem 0;
+    border: 1px solid #122130;
+    border-radius: 5px;
+    background-color: #1b2733;
+    padding: 0.4rem;
 }
 
 .mcc-result p{
@@ -176,6 +189,12 @@ a[href^="ftp://"] {
 }
 .predownload-info {
     margin-bottom: 0.4rem;
+}
+.title-link {
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    display: -webkit-box;
 }
 .title-info-columns:not(:last-child) {
     margin-bottom: .2rem;
@@ -198,4 +217,20 @@ a[href^="ftp://"] {
 
 .mac-inset {
     padding-left: 70px;
+}
+
+.columns.is-variable .column {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+}
+
+.column {
+    padding: 0.4rem;
+}
+
+@media screen and (min-width: 1216px){
+    .container {
+        max-width: 960px;
+        width: 960px;
+    }
 }
