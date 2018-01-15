@@ -63,8 +63,8 @@ html { overflow-y: hidden; }
 .desc {
     font-size: 76%;
     position: absolute;
-    bottom: 6px;
-    right: 12px;
+    bottom: 0.35rem;
+    right: 0.75rem;
     color: #6a7b88;
 }
 #title-name{
@@ -156,7 +156,7 @@ a[href^="ftp://"] {
     line-height: 1.3;
 }
 .box {
-    padding: 0.95rem;
+    padding: 0.75rem;
     box-shadow: none;
     position: relative;
     height: 100px;

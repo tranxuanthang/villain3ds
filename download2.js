@@ -282,8 +282,10 @@ async function addNewDownload(event,receivedData){
     }
     
     if(downloadContinue == true){
+        /* Array for pushing promises to */
         var contentTask = [];
-        var cIDtotal = [];
+
+        /* Push download promises of each content to above array */
         for(let i = 0; i < contentCount; i++) {
             //console.log('i='+i);
             let tmdFile = fs.readFileSync(path.join(dldir,'tmd'),null).buffer;
@@ -297,24 +299,21 @@ async function addNewDownload(event,receivedData){
             contentTask.push(() => dlTaskHandler('http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/'+titleData.titleID+'/'+cID, path.join(dldir,cID), cID, contentCount, dldir,titleData.titleID));
         }
         console.log(contentTask);
-        async function contentDownloadTask(){
-            try {
-                for(let i = 0;i<contentTask.length-1;i+=2){
-                    if(i+1 == contentTask.length){
-                        await contentTask[i]();
-                    } else {
-                        await Promise.all([contentTask[i](),contentTask[i+1]()]);
-                    }
+
+        /* Run download 2 contents in parallel at one time */
+        try {
+            for(let i = 0;i<=contentTask.length-1;i+=2){
+                if(i+1 == contentTask.length){
+                    await contentTask[i]();
+                } else {
+                    await Promise.all([contentTask[i](),contentTask[i+1]()]);
                 }
-                await makeCia(titleData.titleID, dldir, path.join(ciadir,tempFileName), path.join(ciadir,fileName), tempFileName, fileName);
             }
-            catch(error){
-                $('#'+titleData.titleID+' .alert').html('One or more downloads did not completed successfully :(');
-            }
+            await makeCia(titleData.titleID, dldir, path.join(ciadir,tempFileName), path.join(ciadir,fileName), tempFileName, fileName);
         }
-        contentDownloadTask();
-        
-        
+        catch(error){
+            $('#'+titleData.titleID+' .alert').html('One or more downloads did not completed successfully :(');
+        }
     }
 }
 
