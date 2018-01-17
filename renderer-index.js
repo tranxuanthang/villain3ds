@@ -94,7 +94,7 @@ async function showQrCode(data) {
 }
 
 function getTitleInfo(id) {
-	queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=title&id='+id;
+	queryUrl = 'http://3ds.game4u.pro/apiv3.php?type=title&id='+id;
 	console.log('Request title info: '+queryUrl);
 	$.getJSON(queryUrl, showTitleInfo);
 }
@@ -114,43 +114,57 @@ function sendDownloadRequest() {
 function showListing(param,sort,page,keyword) {
 	return function (data) {
 		param.hide().empty();
-		$('.error').html('');
-		var appendTitleList = '';
-		for (var i = 0; i < data.query.length; i++) {
-			if(data.query[i].icon == "none")iconUrl = './img/blank.png'; else iconUrl = data.query[i].icon;
-			appendTitleList +=
-			'<div id="item-'+i+'" class="column is-one-third-mobile is-one-quarter-tablet"><div class="box"><article class="media">'
-				+'<div class="media-left">'
-					+'<img src="'+iconUrl+'" style="width: 37px" border="0" alt="">'
-				+'</div>'
-				+'<div class="media-content">'
-					+'<div class="mdl-card__title"><h3 class="mdl-card__title-text">'
-					+'<a href="#" data-id="'+data.query[i].id+'" class="title-link show-modal">'+data.query[i].name+'</a>'
-					+'</h2></div>'
-					+'<div class="desc">'+data.query[i].region+' | '+data.query[i].type+' | '+func.humanFileSize(data.query[i].size,true)+'</div>'
-				+'</div>'
-			+'</article></div></div>';
-			//$('#item-'+i).fadeIn('fast');
-		}
-		param.append(appendTitleList);
-		//if(i=data.query.length-1)$('#loading').fadeOut();
-		param.fadeIn('fast');
-		console.log('Request listing: '+queryUrl);
-		storingData.sort = sort;
-		storingData.page = page;
-		storingData.keyword = keyword;
-		$("#current-page").html(page);
-		$("#sum-page").html(Math.ceil(data.total/36));
-		if(page<2) $('#prev-link').attr("disabled", true); else $('#prev-link').attr("disabled", false);
-		if(page>Math.ceil(data.total/36)-1) $('#next-link').attr("disabled", true); else  $('#next-link').attr("disabled", false);
+		if(data.error == 2){
+			$('.error').html('<section class="hero is-dark"><div class="hero-body"><div class="container">'
+			+'<h1 class="title">Oops. Something is wrong</h1>'
+			+'<h2 class="subtitle">Your keyword is too short or too long ;-(</h2>'
+		  	+'</div></div></section>');
+			$('#grid').html('');;
+		} else if(data.error == 1){
+			$('.error').html('<section class="hero is-dark"><div class="hero-body"><div class="container">'
+			+'<h1 class="title">Oops. Something is wrong</h1>'
+			+'<h2 class="subtitle">No result was found ;-(</h2>'
+		  	+'</div></div></section>');
+			$('#grid').html('');;
+		} else {
+			$('.error').html('');
+			var appendTitleList = '';
+			for (var i = 0; i < data.query.length; i++) {
+				if(data.query[i].icon == "none")iconUrl = './img/blank.png'; else iconUrl = data.query[i].icon;
+				appendTitleList +=
+				'<div id="item-'+i+'" class="column is-one-third-mobile is-one-quarter-tablet"><div class="box"><article class="media">'
+					+'<div class="media-left">'
+						+'<img src="'+iconUrl+'" style="width: 37px" border="0" alt="">'
+					+'</div>'
+					+'<div class="media-content">'
+						+'<div class="mdl-card__title"><h3 class="mdl-card__title-text">'
+						+'<a href="#" data-id="'+data.query[i].id+'" class="title-link show-modal">'+data.query[i].name+'</a>'
+						+'</h2></div>'
+						+'<div class="desc">'+data.query[i].region+' | '+data.query[i].type+' | '+func.humanFileSize(data.query[i].size,true)+'</div>'
+					+'</div>'
+				+'</article></div></div>';
+				//$('#item-'+i).fadeIn('fast');
+			}
+			param.append(appendTitleList);
+			//if(i=data.query.length-1)$('#loading').fadeOut();
+			param.fadeIn('fast');
+			console.log('Request listing: '+queryUrl);
+			storingData.sort = sort;
+			storingData.page = page;
+			storingData.keyword = keyword;
+			$("#current-page").html(page);
+			$("#sum-page").html(Math.ceil(data.total/36));
+			if(page<2) $('#prev-link').attr("disabled", true); else $('#prev-link').attr("disabled", false);
+			if(page>Math.ceil(data.total/36)-1) $('#next-link').attr("disabled", true); else  $('#next-link').attr("disabled", false);
 
-		var showDialogButton = $('.show-modal');
-		showDialogButton.on('click', function() {
-			var $this = $(this),
-			getid = parseInt($this.data('id'));
-			getTitleInfo(getid);
-			$('.modal-title').addClass('is-active');
-		});
+			var showDialogButton = $('.show-modal');
+			showDialogButton.on('click', function() {
+				var $this = $(this),
+				getid = parseInt($this.data('id'));
+				getTitleInfo(getid);
+				$('.modal-title').addClass('is-active');
+			});
+		}
 	}
 }
 
@@ -161,9 +175,9 @@ function getListing(param,sort,page,keyword) {
 	let showRegion = store.get('region');
 	if(!keyword){
 		console.log('Current sorting '+sort);
-		queryUrl = 'http://3ds.game4u.pro/apiv2.php?sort='+sort+'&from='+start+'&qual=36&region='+showRegion;
+		queryUrl = 'http://3ds.game4u.pro/apiv3.php?sort='+sort+'&from='+start+'&qual=36&region='+showRegion;
 	} else {
-		queryUrl = 'http://3ds.game4u.pro/apiv2.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36&region='+showRegion;
+		queryUrl = 'http://3ds.game4u.pro/apiv3.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36&region='+showRegion;
 	}
 	
 	$.getJSON(queryUrl, showListing(param,sort,page,keyword)).done(function(d) {
@@ -240,12 +254,14 @@ function searchSubmit(e) {
 	// Get input field values
 	keyword = $('input[name=keyword]').val();
 	console.log(keyword);
-	getListing($(".demo-content"),'',1,keyword);
-	//$('#storing-data').attr("data-keyword", keyword);
-	storingData.keyword = keyword;
-	$("#sort-0").removeClass('is-active');
-	$("#sort-1").removeClass('is-active');
-	$("#sort-2").removeClass('is-active');
+	if(keyword!=''){
+		getListing($(".demo-content"),'',1,keyword);
+		//$('#storing-data').attr("data-keyword", keyword);
+		storingData.keyword = keyword;
+		$("#sort-0").removeClass('is-active');
+		$("#sort-1").removeClass('is-active');
+		$("#sort-2").removeClass('is-active');
+	}
 }
 function checkNewVersion() {
 	let appVersion = app.getVersion();
