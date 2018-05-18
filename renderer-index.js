@@ -87,14 +87,14 @@ async function showQrCode(data) {
             
             etkBinCheck = true;
 			let titlekey = parsedEtkBin[data.query.titleID];
-			//$("#qr-info").html('<img id="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=http%3A%2F%2F3ds.game4u.pro%2Ftikserv.php%3Ftitleid%3D'+data.query.titleID+'%26titlekey%3D'+titlekey+'" alt="" style="height:98%;" />');
-			$('#qr-image').attr("src",'https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=http%3A%2F%2F3ds.game4u.pro%2Ftikserv.php%3Ftitleid%3D'+data.query.titleID+'%26titlekey%3D'+titlekey+'');
+			//$("#qr-info").html('<img id="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=http%3A%2F%2F3ds.alduin.net%2Ftikserv.php%3Ftitleid%3D'+data.query.titleID+'%26titlekey%3D'+titlekey+'" alt="" style="height:98%;" />');
+			$('#qr-image').attr("src",'https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=http%3A%2F%2F3ds.alduin.net%2Ftikserv.php%3Ftitleid%3D'+data.query.titleID+'%26titlekey%3D'+titlekey+'');
         }
     }
 }
 
 function getTitleInfo(id) {
-	queryUrl = 'http://3ds.game4u.pro/apiv3.php?type=title&id='+id;
+	queryUrl = 'http://3ds.alduin.net/apiv3.php?type=title&id='+id;
 	console.log('Request title info: '+queryUrl);
 	$.getJSON(queryUrl, showTitleInfo);
 }
@@ -175,9 +175,9 @@ function getListing(param,sort,page,keyword) {
 	let showRegion = store.get('region');
 	if(!keyword){
 		console.log('Current sorting '+sort);
-		queryUrl = 'http://3ds.game4u.pro/apiv3.php?sort='+sort+'&from='+start+'&qual=36&region='+showRegion;
+		queryUrl = 'http://3ds.alduin.net/apiv3.php?sort='+sort+'&from='+start+'&qual=36&region='+showRegion;
 	} else {
-		queryUrl = 'http://3ds.game4u.pro/apiv3.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36&region='+showRegion;
+		queryUrl = 'http://3ds.alduin.net/apiv3.php?type=search&keyword='+encodeURI(keyword)+'&from='+start+'&qual=36&region='+showRegion;
 	}
 	
 	$.getJSON(queryUrl, showListing(param,sort,page,keyword)).done(function(d) {
@@ -266,7 +266,7 @@ function searchSubmit(e) {
 function checkNewVersion() {
 	let appVersion = app.getVersion();
 	$('#curr-ver').html(appVersion);
-	let queryUrl = 'http://3ds.game4u.pro/villain3ds_checkver.php?version='+appVersion;
+	let queryUrl = 'http://3ds.alduin.net/villain3ds_checkver.php?version='+appVersion;
 	console.log(queryUrl);
 	$.getJSON(queryUrl, function(data){
 		if(data.has_newer_version==1){
