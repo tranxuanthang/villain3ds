@@ -1,6 +1,6 @@
 {
   "name": "Villain3DS",
-  "version": "0.1.2",
+  "version": "0.1.3-3",
   "description": "Download 3DS games to your PC as .cia files.",
   "main": "main.js",
   "scripts": {
@@ -11,9 +11,8 @@
     "package-linux": "electron-packager . --overwrite --asar --platform=linux --arch=x64 --icon=img/icon.png --prune=true --out=../release-builds"
   },
   "devDependencies": {
-    "devtron": "^1.4.0",
-    "electron": "^1.8.7",
-    "electron-packager": "^9.1.0"
+    "electron": "~1.8.7",
+    "electron-packager": "^12.0.2"
   },
   "dependencies": {
     "child_process": "^1.0.2",
@@ -21,7 +20,7 @@
     "fs": "0.0.1-security",
     "fs-extra": "^4.0.3",
     "moment": "^2.22.1",
-    "mt-files-downloader": "https://github.com/tranxuanthang/node-mt-files-downloader.git",
+    "mt-files-downloader": "git+https://github.com/tranxuanthang/node-mt-files-downloader.git",
     "mustache": "^2.3.0",
     "os": "^0.1.1",
     "path": "^0.12.7",
