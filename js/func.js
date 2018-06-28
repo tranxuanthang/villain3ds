@@ -53,3 +53,7 @@ exports.toHexString = function toHexString(byteArray) {
         return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     }).join('');
 }
+
+exports.hexForHuman = function hexForHuman(hexString) {
+    return hexString.match(/.{1,2}/g).join(" ");
+}

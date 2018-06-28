@@ -12,7 +12,9 @@ var exec = require('child_process').exec;
 var shell = remote.shell;
 var os = require('os');
 var Mustache = require('mustache');
+const crypto = require('crypto');
 var func = require('./js/func.js');
+
 app.showExitPrompt = false;
 
 /* Get saved data from config file */
@@ -258,10 +260,10 @@ async function addNewDownload(event,receivedData){
         /* Check invalid titlekey */
         if(typeof titleKey === 'undefined'){
             downloadContinue = false;
-            $('#'+titleData.titleID+' .alert').text('Could not find the titlekey for the title you\'re trying to download. Please try deleting enctitlekeys.bin file in your base directory.');
+            $('#'+titleData.titleID+' .alert').text('Could not find the titlekey for the title you\'re trying to download. Please try deleting enctitlekeys.bin file in your base directory.').show();
         } else if(titleKey.length!=32){
             downloadContinue = false;
-            $('#'+titleData.titleID+' .alert').text('The titlekey has invalid length. Please try deleting enctitlekeys.bin file in your base directory.');
+            $('#'+titleData.titleID+' .alert').text('The titlekey has invalid length. Please try deleting enctitlekeys.bin file in your base directory.').show();
         }
     }
 
@@ -274,10 +276,12 @@ async function addNewDownload(event,receivedData){
         try {
             let results = await Promise.all([getContentCount(titleData.titleID,dldir),createCetk(titleData.titleID,titleKey,dldir)]);
             var contentCount = results[0];
+            var decryptedTitleKey = results[1];
         }
         catch(error) {
             downloadContinue = false;
-            $('#'+titleData.titleID+' .alert').text('Something bad happened when working with downloaded tmd file ('+error+').');
+            $('#'+titleData.titleID+' .alert').text('Something bad happened when working with downloaded tmd file ('+error+').').show();
+            console.error(error);
         }
     }
     
@@ -292,11 +296,12 @@ async function addNewDownload(event,receivedData){
             let tmdFileArrayBuffer = new Uint8Array(tmdFile);
             let cOffs = 0xB04+(0x30*i);
             let cID = func.toHexString(tmdFileArrayBuffer.slice(cOffs, cOffs+0x04));
-            //let hash = toHexString(tmdFileArrayBuffer.slice(cOffs, cOffs+0x10+0x20));
+            let contentIndex = func.toHexString(tmdFileArrayBuffer.slice(cOffs+0x04, cOffs+0x06));
+            let contentHash = func.toHexString(tmdFileArrayBuffer.slice(cOffs+0x10, cOffs+0x10+0x20));
             let view = {"content-id": cID};
             $('#'+titleData.titleID+' .card-content').append(Mustache.render(newContentTemplate, view));
             renderDownloadTasks(cID,titleData.titleID);
-            contentTask.push(() => dlTaskHandler('http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/'+titleData.titleID+'/'+cID, path.join(dldir,cID), cID, contentCount, dldir,titleData.titleID));
+            contentTask.push(() => dlTaskHandler('http://ccs.cdn.c.shop.nintendowifi.net/ccs/download/'+titleData.titleID+'/'+cID, path.join(dldir,cID), cID, contentIndex, contentCount, dldir,titleData.titleID, false, contentHash, decryptedTitleKey));
         }
         console.log(contentTask);
 
@@ -312,7 +317,7 @@ async function addNewDownload(event,receivedData){
             await makeCia(titleData.titleID, dldir, path.join(ciadir,tempFileName), path.join(ciadir,fileName), tempFileName, fileName);
         }
         catch(error){
-            $('#'+titleData.titleID+' .alert').html('One or more downloads did not completed successfully :(');
+            $('#'+titleData.titleID+' .alert').html('One or more downloads did not completed successfully :(').show();
         }
     }
 }
@@ -323,11 +328,11 @@ function getTmd(titleId,dldir){
         try {
             await func.simpleDownload(tmdUrl,path.join(dldir,'tmd'));
             console.log('resolved');
-            $('#'+titleId+' .alert').slideUp(200);
+            $('#'+titleId+' .alert').hide();
             resolve();
         } catch(error){
-            console.log('catched error'+error);
-            $('#'+titleId+' .alert').html('Something bad happened when downloading tmd file ('+error+').<br><a class="button is-primary" id="tmdagain">Try again</a>');
+            console.error(error);
+            $('#'+titleId+' .alert').html('Something bad happened when downloading tmd file ('+error+').<br><a class="button is-primary" id="tmdagain">Try again</a>').show();
             $('#tmdagain').on('click',function(){
                 $('#tmdagain').off('click');
                 console.log('clicked try gagain');
@@ -349,7 +354,6 @@ async function getContentCount(titleId,dldir){
         
         let hexContentCount = func.toHexString(tmdFileArrayBuffer.slice(tk+0x9E, tk+0xA0));
         let contentCount = parseInt(hexContentCount,16);
-
         if(contentCount <1 ){
             console.log(tmdFileArrayBuffer);
             throw 'Error: Can\'t read the tmd file, or tmd file is broken, tmd file has '+tmdFileSize+' bytes, content count is '+contentCount;
@@ -361,7 +365,39 @@ async function getContentCount(titleId,dldir){
     } catch(error) {
         $('#'+titleId+' .title-contentcount').text('Failed');
     }
+}
+
+function getDecryptedTitleKeyFromEncryptedTitleKey(cetkInUint8Array, encTitleKey, titleID) {
+    /* Common key collection */
+    const commonKeys = ["64C5FD55DD3AD988325BAAEC5243DB98", "4AAA3D0E27D4D728D0B1B433F0F9CBC8",
+                        "FBB0EF8CDBB0D8E453CD99344371697F", "25959B7AD0409F72684198BA2ECD7DC6",
+                        "7ADA22CAFFC476CC8297A0C7CEEEEEBE", "A5051CA1B37DCF3AFBCF8CC1EDD9CE02"];
     
+    /* Find index of common key used to decrypt the title key of this title */
+    const indexToCommonKeyYUsed = cetkInUint8Array.slice(tk+0xB1,tk+0xB1+1)[0];
+
+    /* Build 16 bytes long IV from the title ID */
+    const binaryArraytitleID = hex2binArr(titleID);
+    const titleIDToIv = new Uint8Array([...binaryArraytitleID, ...new Array(8).fill(0)]);
+
+    /* Convert encrypted title key to typed array format */
+    const encTitleKeyUint8Array = new Uint8Array(hex2binArr(encTitleKey));
+
+    /* Convert used common key to typed array format */
+    const keyUsedForDecryptingUint8Array = new Uint8Array(hex2binArr(commonKeys[indexToCommonKeyYUsed]));
+
+    /* For debugging */
+    //console.log("encTitleKeyUint8Array: ", encTitleKeyUint8Array);
+    //console.log("indexToCommonKeyYUsed: ",indexToCommonKeyYUsed[0],"key: ",new Uint8Array(hex2binArr(commonKeys[indexToCommonKeyYUsed])));
+    //console.log("titleIDToIv: ",titleIDToIv);
+
+    /* Start decrypting */
+    const cipher = crypto.createDecipheriv('aes-128-cbc', keyUsedForDecryptingUint8Array, titleIDToIv);
+    cipher.setAutoPadding(false);
+    let decryptedTitleKey = cipher.update(encTitleKeyUint8Array, 'buffer' , 'hex') + cipher.final('hex');
+
+    /* Return */
+    return decryptedTitleKey;
 }
 
 /* Create the ticket file */
@@ -395,8 +431,20 @@ async function createCetk(cetkTitleId, cetkTitleKey,dldir){
     /* Create cetk file by joining tikdata with magic */
     let finalCetk = new Buffer(tikdataArr.concat(magic));
     
-    /* Save created cetk file */
     let cetkSuccess = true;
+
+    let decryptedTitleKey;
+    /* Decrypt the title key */
+    try {
+        decryptedTitleKey = getDecryptedTitleKeyFromEncryptedTitleKey(tikdataArr, cetkTitleKey, cetkTitleId);
+        //throw "fuck";
+	} catch (err) {
+        cetkSuccess = false;
+        $('#'+cetkTitleId+' .title-cetk').text('Failed');
+		throw err;
+    }
+    
+    /* Save created cetk file */
     try {
         fs.writeFileSync(path.join(rawdir,cetkTitleId,'cetk'), finalCetk);
         $('#'+cetkTitleId+' .title-cetk').text('OK');
@@ -404,7 +452,9 @@ async function createCetk(cetkTitleId, cetkTitleKey,dldir){
         cetkSuccess = false;
         $('#'+cetkTitleId+' .title-cetk').text('Failed');
 		throw err;
-	}
+    }
+    
+    return decryptedTitleKey;
 }
 function renderDownloadTasks(cID,titleId){
     let progressElement = $('#'+titleId+' #'+cID+' .content-status');
@@ -417,12 +467,12 @@ function renderDownloadTasks(cID,titleId){
         +'<a class="button is-link is-small download-destroy" disabled><span class="icon is-small"><i class="ion-close"></i></span></a>'
     );
 }
-function dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload = false){
+function dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload = false, contentHash, decryptedTitleKey){
     return new Promise(function(resolve,reject){
         function disableAllButton(){
             $('#'+titleId+' #'+cID+' .download-control').children('.download-play, .download-pause, .download-destroy').attr('disabled','disabled');
         }
-        createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload)
+        createContentDlTask(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey)
         .then(function(){
             resolve();
         })
@@ -432,7 +482,7 @@ function dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleI
             disableAllButton();
             $('#'+titleId+' #'+cID+' .download-control').children('.download-play').removeAttr('disabled');
             $('#'+titleId+' #'+cID+' .download-play').on('click',function(){
-                dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload)
+                dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey)
                 .then(function(){
                     resolve();
                 });
@@ -440,9 +490,58 @@ function dlTaskHandler(contentUrl, contentPath, cID, contentCount, dldir, titleI
         });
     });
 }
+
+function calcFileHashWithSha256(fileDir) {
+    return new Promise((resolve, reject) => {
+        let hash = crypto.createHash("sha256");
+        let stream = fs.createReadStream(fileDir);
+        stream.on('error', err => reject(err));
+        stream.on('data', chunk => hash.update(chunk));
+        stream.on('end', () => resolve(hash.digest('hex')));
+    });
+}
+
+function decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTitleKey, decryptedPath) {
+    return new Promise((resolve, reject) => {
+        /* Convert decrypted title key to typed array */
+        const decryptedTitleKeyUint8Array = new Uint8Array(hex2binArr(decryptedTitleKey));
+
+        /* Build IV from content index */
+        const contentIndexArray = hex2binArr(contentIndex);
+        const ivFromContentIndex = new Uint8Array([...contentIndexArray, ...new Array(14).fill(0)]);
+
+        /* Create R&W stream for CDN encrypted & decrypted files */
+        const readContentFile = fs.createReadStream(contentPath);
+        const writeDecryptedContentFile = fs.createWriteStream(decryptedPath);
+        console.log(decryptedPath);
+
+        /* Start decrypting */
+        const decrypt = crypto.createDecipheriv('aes-128-cbc', decryptedTitleKeyUint8Array, ivFromContentIndex);
+        decrypt.setAutoPadding(false);
+        readContentFile.pipe(decrypt).pipe(writeDecryptedContentFile);
+        writeDecryptedContentFile.on('finish', function () {
+            resolve();
+        });
+        writeDecryptedContentFile.on('error', function (error) {
+            reject(error);
+        });
+    });
+}
+async function verifyContent(contentPath, contentHash, titleId, cID, contentIndex, decryptedTitleKey) {
+    const decryptedPath = path.join(os.tmpdir(),`decrypted.${titleId}.${contentIndex}.${cID}.tmp`);
+    await decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTitleKey, decryptedPath);
+    const hashResult = await calcFileHashWithSha256(decryptedPath);
+    console.log("cIndex: ", contentIndex, hashResult, "content hash: ", contentHash);
+    if(hashResult == contentHash) {
+        return {result: true, calculatedHash: hashResult};
+    } else {
+        return {result: false, calculatedHash: hashResult};
+    }
+}
+
 /* Create the content download */
-function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, titleId, redownload){
-    return new Promise(function(resolve,reject){
+function createContentDlTask(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey){
+    return new Promise(function(resolve,reject) {
         let num = cID;
         let progressElement = $('#'+titleId+' #'+cID+' .content-status');
         let progressBar = $('#'+titleId+' #'+cID+' .progress');
@@ -499,6 +598,11 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
             //reject();
         });
         let timer = setInterval(function() {
+            if(dl.status === -1 || dl.status === 3 || dl.status === -3) {
+                clearInterval(timer);
+                timer = null;
+            }
+
             if(dl.status == 0) {
                 disableAllButton();
                 let stats = dl.getStats();
@@ -521,15 +625,29 @@ function createContentDlTask(contentUrl, contentPath, cID, contentCount, dldir, 
                 disableAllButton();
             } else if(dl.status == 3) {
                 progressBar.val(100).removeClass('is-primary is-warning is-danger is-success').addClass('is-success');
-                if(dl.alreadydownloaded == true){
-                    progressElement.text('Content #'+ num +' is already downloaded before.');
-                } else {
-                    progressElement.text('Content #'+ num +' is successfully downloaded.');
-                }
-                disableAllButton();
-                hideButtons();
-                $('#'+titleId+' #'+cID).delay(1500).slideUp();
-                resolve();
+                progressElement.html(`Content #${num} is downloaded. Decrypting & calculating hash...`);
+                verifyContent(contentPath, contentHash, titleId, cID, contentIndex, decryptedTitleKey)
+                .then(hashVerify => {
+                    if(hashVerify.result == true) {
+                        if(dl.alreadydownloaded == true) {
+                            progressElement.html(`Content #${num} is already downloaded before. Checksum is matched.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                        } else {
+                            progressElement.html(`Content #${num} is successfully downloaded. Checksum is matched.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                        }
+                        disableAllButton();
+                        hideButtons();
+                        $('#'+titleId+' #'+cID);
+                        resolve();
+                    } else {
+                        progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
+                        progressElement.html(`Content #${num} is downloaded, but the content hash is not match.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                        disableAllButton();
+                        hideButtons();
+                        dl.destroy();
+                        reject("error_destroyed_by_user");
+                    }
+                });
+                
             } else if(dl.status == -1) {
                 progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
                 progressElement.text('Content #'+ num +' is failed to download ('+ dl.error+').');
