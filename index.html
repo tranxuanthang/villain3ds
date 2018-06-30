@@ -56,8 +56,8 @@
 						</div>
 						<div class="navbar-brand" style="float:right">
 							<div class="navbar-item">
+								<a class="button is-primary" id="cias-button"><span class="icon"><i class="ion-archive ion-fw"></i></span></a>
 								<a class="button is-primary" id="config-button"><span class="icon"><i class="ion-ios-gear ion-fw"></i></span></a>
-							
 								<a class="button is-primary" id="about-button"><span class="icon"><i class="ion-information-circled ion-fw"></i></span></a>
 							</div>
 						</div>
@@ -243,6 +243,45 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="modal modal-cias">
+		<div class="modal-background dialog-close"></div>
+		<div class="modal-card">
+			<header class="modal-card-head">
+				<div class="modal-card-title">Downloaded CIAs</div>
+				<button class="delete dialog-close" aria-label="close"></button>
+			</header>
+			<section class="modal-card-body">
+				<p>These is all downloaded eShop/playable CIAs. DLCs, updates or other titles won't show up here.</p>
+				<table class="table is-fullwidth is-primary">
+					<tbody id="ciaslist">
+						
+					</tbody>
+				</table>
+			</section>
+			<footer class="buttons modal-card-foot is-right">
+				<button class="button is-primary dialog-close">Close</button>
+			</footer>
+		</div>
+	</div>
+
+	<div class="modal modal-decrypt">
+		<div class="modal-background dialog-close"></div>
+		<div class="modal-card">
+			<header class="modal-card-head">
+				<div class="modal-card-title">Executing decrypt.exe</div>
+				<button class="delete dialog-close dialog-close2" aria-label="close"></button>
+			</header>
+			<section class="modal-card-body">
+				<p id="decrypt-info"></p>
+				<div id="decrypt-console-output" class="mcc-output content is-small allow-select allow-drag" style="font-family: monospace; display: none;"></div>
+			</section>
+			<footer class="buttons modal-card-foot is-right">
+				<button class="button is-primary dialog-close dialog-close2">Close</button>
+			</footer>
+		</div>
+	</div>
+
     <script>
         // You can also require other files to run in this process
         require('./renderer-index.js')

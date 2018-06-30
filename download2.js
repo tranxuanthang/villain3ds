@@ -238,6 +238,7 @@ async function addNewDownload(event,receivedData){
     let tempFileName = sanitizefn(titleData.titleID+'.cia');
     let fileName = sanitizefn(titleData.name+' '+titleData.region+' ('+titleData.titleID+').cia');
     let downloadContinue = true;
+    let mainContentId;
     fs.ensureDirSync(dldir);
 
     console.log('data is received.');
@@ -297,6 +298,7 @@ async function addNewDownload(event,receivedData){
             let cOffs = 0xB04+(0x30*i);
             let cID = func.toHexString(tmdFileArrayBuffer.slice(cOffs, cOffs+0x04));
             let contentIndex = func.toHexString(tmdFileArrayBuffer.slice(cOffs+0x04, cOffs+0x06));
+            if(contentIndex == "0000") mainContentId = cID;
             let contentHash = func.toHexString(tmdFileArrayBuffer.slice(cOffs+0x10, cOffs+0x10+0x20));
             let view = {"content-id": cID};
             $('#'+titleData.titleID+' .card-content').append(Mustache.render(newContentTemplate, view));
@@ -314,7 +316,7 @@ async function addNewDownload(event,receivedData){
                     await Promise.all([contentTask[i](),contentTask[i+1]()]);
                 }
             }
-            await makeCia(titleData.titleID, dldir, path.join(ciadir,tempFileName), path.join(ciadir,fileName), tempFileName, fileName);
+            makeCia(titleData.titleID, dldir, path.join(ciadir,tempFileName), path.join(ciadir,fileName), tempFileName, fileName, mainContentId);
         }
         catch(error){
             $('#'+titleData.titleID+' .alert').html('One or more downloads did not completed successfully :(').show();
@@ -527,8 +529,10 @@ function decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTi
         });
     });
 }
+
 async function verifyContent(contentPath, contentHash, titleId, cID, contentIndex, decryptedTitleKey) {
-    const decryptedPath = path.join(os.tmpdir(),`decrypted.${titleId}.${contentIndex}.${cID}.tmp`);
+    const decryptedPath = path.join(os.tmpdir(),"Villain3DS", titleId, `decrypted.${contentIndex}.${cID}.tmp`);
+    fs.ensureDirSync(path.join(os.tmpdir(),"Villain3DS", titleId));
     await decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTitleKey, decryptedPath);
     const hashResult = await calcFileHashWithSha256(decryptedPath);
     console.log("cIndex: ", contentIndex, hashResult, "content hash: ", contentHash);
@@ -630,17 +634,17 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                 .then(hashVerify => {
                     if(hashVerify.result == true) {
                         if(dl.alreadydownloaded == true) {
-                            progressElement.html(`Content #${num} is already downloaded before. Checksum is matched.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                            progressElement.html(`Content #${num} is already downloaded before. Checksum is successfully verified.`);
                         } else {
-                            progressElement.html(`Content #${num} is successfully downloaded. Checksum is matched.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                            progressElement.html(`Content #${num} is successfully downloaded. Checksum is successfully verified.`);
                         }
                         disableAllButton();
                         hideButtons();
-                        $('#'+titleId+' #'+cID);
+                        $('#'+titleId+' #'+cID).delay(1900).slideUp();
                         resolve();
                     } else {
                         progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
-                        progressElement.html(`Content #${num} is downloaded, but the content hash is not match.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                        progressElement.html(`Content #${num} is downloaded, but has the wrong SHA-256 hash!!.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
                         disableAllButton();
                         hideButtons();
                         dl.destroy();
@@ -676,20 +680,22 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
     
 }
 
-function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName){
+function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName, mainContentId){
     let command = '"'+makeCiaDir+'" "'+rawFileDir+'" "'+tempCiaDir+'"';
-    $('#'+titleId+' .card-content').append('<div class="mcc-execute"><div class="mcc-result">Executing make_cdn_cia...</div><div class="mcc-output content is-small" style="font-family: monospace; display:none;">Waiting for output...</div></div>');
+    $('#'+titleId+' .card-content').append('<div class="mcc-execute"><div class="mcc-result">Executing make_cdn_cia...</div><div class="mcc-note content is-small" style="display:none;"></div><div class="mcc-output content is-small" style="font-family: monospace; display:none;">Waiting for output...</div></div>');
 	execute(command, function(output) {
         output = output.replace(/(?:\r\n|\r|\n)/g, '<br />');
+        output = output.trim();
+        if(output)
         $('#'+titleId+' .mcc-output').show().html('<p class="result-note allow-select allow-drag">'+command+'</p><p class="allow-select allow-drag">'+output+'</p>');
         let stats = fs.statSync(tempCiaDir);
         let fileSizeInBytes = stats["size"];
         if (fs.existsSync(tempCiaDir) && fileSizeInBytes!=0) {
             try{
                 fs.renameSync(tempCiaDir,ciadir);
-                $('#'+titleId+' .mcc-result').html('<p class="allow-select allow-drag">Renamed <span class="tag is-primary allow-select allow-drag">'+tempFileName+'</span> to <span class="tag is-primary allow-select allow-drag">'+fileName+'</span>.</p>'
-                +'<p class="allow-select allow-drag">CIA file is generated. Everything is finished 😊</p>'
-                +'<p class="allow-select allow-drag">The CIA file size is: '+func.humanFileSize(fileSizeInBytes,true)+'</p>');
+                $('#'+titleId+' .mcc-result').html('<!--<p class="allow-select allow-drag">Renamed <span class="tag is-primary allow-select allow-drag">'+tempFileName+'</span> to <span class="tag is-primary allow-select allow-drag">'+fileName+'</span>.</p>-->'
+                +'<p class="allow-select allow-drag">CIA file is generated successfully ('+func.humanFileSize(fileSizeInBytes,true)+') 😊.</p>'
+                +'<!--<p class="allow-select allow-drag">The CIA file size is: '+func.humanFileSize(fileSizeInBytes,true)+'</p>-->');
                 
                 //fs.removeSync(rawFileDir);
             }
@@ -705,6 +711,24 @@ function makeCia(titleId, rawFileDir, tempCiaDir, ciadir, tempFileName, fileName
             fs.removeSync(rawFileDir);
             $('#cleanrawdir').html('Cleaned').attr('disabled', true);
         });
+    });
+    const decryptedPath = path.join(os.tmpdir(),"Villain3DS", titleId, `decrypted.0000.${mainContentId}.tmp`);
+    console.log(decryptedPath);
+    const readNcchFlag7 = fs.createReadStream(decryptedPath, { start : 0x18F, end: 0x18F });
+    readNcchFlag7.setEncoding('binary')
+    let ncchFlag7Raw = '', ncchFlag7Array, ncchFlag7;
+    readNcchFlag7.on("data", chunk => {
+        ncchFlag7Raw += chunk;
+    });
+    readNcchFlag7.on("end", () => {
+        ncchFlag7Array = Buffer.from(ncchFlag7Raw, 'binary');
+        ncchFlag7 = ncchFlag7Array[0];
+        if(ncchFlag7 == 32)
+        $('#'+titleId+' .mcc-note').show().html("<b>Note:</b> This title is a 9.6.0+ title and requires an additional seed. After installation, the title may not be launched unless you import an additional seed for it. If you don't, you will get one of these scenarios: black screen on launch, 3ds get rebooted, or luma3ds exception.<br>More information <a href=\"#\" id=\"openseedfaq\"><b>here</b></a>.");
+        $("#openseedfaq").on("click", function() {
+            shell.openExternal("https://github.com/tranxuanthang/villain3ds/wiki/FAQs#user-content-how-to-install-additional-seed-for-960-titles");
+        });
+        fs.removeSync(path.join(os.tmpdir(),"Villain3DS", titleId));
     });
 }
 

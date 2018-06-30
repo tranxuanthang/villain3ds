@@ -2296,7 +2296,7 @@ a.box:active {
 }
 
 .content table tr:hover {
-    background-color: #2b3e50
+    /* background-color: #2b3e50 */
 }
 
 .content table thead td,.content table thead th,.table thead td,.table thead th {
@@ -3839,7 +3839,7 @@ a.box:active {
 }
 
 .table {
-    background-color: #2b3e50;
+    /* background-color: #2b3e50; */
     color: #dee5ed;
     margin-bottom: 1.5rem
 }

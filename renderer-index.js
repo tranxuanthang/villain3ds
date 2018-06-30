@@ -7,8 +7,10 @@ const path = require('path')
 var fs = require('fs-extra');
 var os = require('os');
 const shell = require('electron').shell;
+const spawn = require('child_process').spawn;
 var request = require('request');
 var func = require('./js/func.js');
+var glob = require("glob");
 var parsedEtkBin = new Object();
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
@@ -362,6 +364,113 @@ $('#about-button').on('click', function() {
 	});
 });
 
+$('#cias-button').on('click', function() {
+	$('.modal-cias').addClass('is-active');
+	let basePath = store.get('baseDirectory');
+	let ciadir = path.join(basePath,'cias');
+	fs.readdir(ciadir, {encoding: "utf-8"}, (err, files) => {
+		$("#ciaslist").html("");
+		$("#ciaslist").append(`<tr><th>Icon</th><th>Title Name</th><th>Region</th><th>TitleID</th></tr>`);
+		let ciasList = files
+		.filter(value => value.split('.').pop() == "cia")
+		.map(value => {
+			let fd = fs.openSync(path.join(ciadir,value), "r");
+			let certSizeArr = new Uint8Array(4);
+			let tikSizeArr = new Uint8Array(4);
+			let titleIdArr = new Uint8Array(8);
+			fs.readSync(fd, certSizeArr, 0, 4, 0x08);
+			fs.readSync(fd, tikSizeArr, 0, 4, 0x0c);
+			let certSize = Buffer.from(certSizeArr.reverse()).readUInt32BE(0);
+			let tikSize = Buffer.from(tikSizeArr.reverse()).readUInt32BE(0);
+			let tmdOffset = 0x2040 + certSize + 0x30 + tikSize;
+			fs.readSync(fd, titleIdArr, 0, 8, tmdOffset+0x18C);
+			highTitleId = func.toHexString(titleIdArr.slice(0,4));
+			return {ciaName: value, titleId: func.toHexString(titleIdArr), highTitleId: highTitleId};
+			//return highTitleId == "00040000";
+		})
+		.filter(value => {
+			return value.highTitleId == "00040000";
+		})
+		.map((value, index, arr) => {
+			return {ciaId: `cia-${index}`, ciaName: value.ciaName, titleId: value.titleId, highTitleId: value.highTitleId};
+		});
+		ciasList.map(value => {
+			queryUrl = 'http://3ds.alduin.net/apiv3.php?type=titleid&titleid='+value.titleId;
+			$("#ciaslist").append(`<tr id="${value.ciaId}"><td><img class="cias-icon" src="img/blank.png" alt=""/></td><td><div class="cias-name">###</div><div style="font-size: x-small;"><a href="#" class="cias-link" data-cia-name="${value.ciaName}" data-titleid="${value.titleId}">Make this title citra-ready</a></div></td><td class="cias-region">###</td><td><div>${value.titleId}</div><div style="font-size: x-small; color: gray;">${value.ciaName}</div></td></tr>`);
+			let fileNameWithoutExt = path.parse(value.ciaName).name;
+			let readyCxiFile = path.join(basePath,"citra_ready",`${fileNameWithoutExt}.cxi`);
+			
+			if(os.platform()!='win32') {
+				$(`#${value.ciaId} .cias-link`).hide();
+			} else if(fs.existsSync(readyCxiFile)) {
+				$(`#${value.ciaId} .cias-link`).text("Open citra-ready file");
+			}
+			$.getJSON(queryUrl, jsonData => {
+				$(`#${value.ciaId} .cias-icon`).attr("src",jsonData.query.iconURL);
+				$(`#${value.ciaId} .cias-name`).text(jsonData.query.name);
+				$(`#${value.ciaId} .cias-region`).text(jsonData.query.region);
+			});
+		});
+
+		$(".cias-link").on("click", async function () {
+			console.log("click one");
+			let $this = $(this);
+			let fileNameWithoutExt = path.parse($this.data("cia-name")).name;
+			let readyCxiFile = path.join(basePath,"citra_ready",`${fileNameWithoutExt}.cxi`);
+			if(fs.existsSync(readyCxiFile)) {
+				shell.showItemInFolder(readyCxiFile);
+			} else {
+				$(".cias-link").off("click");
+				$("#decrypt-console-output").hide();
+				$('.modal').removeClass('is-active');
+				$('.modal-decrypt').addClass('is-active');
+				$('.modal-decrypt').find('.dialog-close2').prop('disabled', true);
+
+				let thisCiaDir = path.join(ciadir, $this.data("cia-name"));
+				let tempFile = path.join(os.tmpdir(),"Villain3DS","cias-copy",`${$this.data("titleid")}.cia`);
+				let tempFolderForDecryption = path.join(basePath,"citra_ready","temp");
+				let decryptFileDir = path.join(tempFolderForDecryption,"decrypt.exe");
+				fs.ensureDirSync(tempFolderForDecryption);
+				try {
+					if(!fs.existsSync(decryptFileDir)) {
+						$("#decrypt-info").text("Downloading decrypt.exe...");
+						//$("#decrypt-console-output").append(`Waiting...`);
+						await func.simpleDownload("https://3ds.alduin.net/decrypt.exe", decryptFileDir);
+					}
+					
+				}
+				catch (error) {
+					$("#decrypt-info").text("Decryption failed. Can't download decrypt.exe from internet.");
+					//$("#decrypt-console-output").append(`Failed.`);
+					$('.modal-decrypt').find('.dialog-close2').prop('disabled', false);
+				}
+
+				const child = spawn(decryptFileDir, [`${thisCiaDir}`]);
+				$("#decrypt-info").text("Decrypting this title. This will take up to 5 minutes, depend on CIA size.");
+				$("#decrypt-console-output").show().html(`decrypt.exe "${thisCiaDir}"<br>`);
+				child.stdout.on('data', (data) => {
+					$("#decrypt-console-output").append(`${data.toString().replace(/(?:\r\n|\r|\n)/g, '<br />')}`);
+				});
+				child.stdin.end('');
+				child.on('close', (code) => {
+					fs.renameSync(path.join(basePath,"citra_ready","temp",`${fileNameWithoutExt}.0.ncch`), readyCxiFile);
+					glob(path.join(basePath,"citra_ready","temp",`*.ncch`), {}, function (er, files) {
+						for (const file of files) {
+							fs.unlinkSync(file);
+						}
+					});
+					$("#decrypt-info").html(`Decryption completed. Check the console below if there is any error.<br><b><a href="#" class="button is-primary" id="show-citra-ready-file">Show generated file's directory</a></b>`);
+					$('#show-citra-ready-file').on('click', function () {
+						shell.showItemInFolder(readyCxiFile);
+					});
+					$("#decrypt-console-output").append(`Completed! (exit code: ${code}).`);
+					$('.modal-decrypt').find('.dialog-close2').prop('disabled', false);
+				});
+			}
+		});
+	});
+});
+
 $('.modal-config').find('.dialog-close').on('click', function() {
 	$('.modal').removeClass('is-active');
 	$('#config-form').attr("disabled", true);
@@ -373,6 +482,19 @@ $('.modal-about').find('.dialog-close').on('click', function() {
 	$('#cleanrawdir').off('click');
 	$('#openrawdir').off('click');
 	$('#openciasdir').off('click');
+});
+
+$('.modal-cias').find('.dialog-close').on('click', function() {
+	$('.modal').removeClass('is-active');
+	$("#ciaslist").html("");
+	$(".cias-link").off("click");
+});
+
+$('.modal-decrypt').find('.dialog-close2').on('click', function() {
+	$('.modal').removeClass('is-active');
+	$("#decrypt-console-output").html("");
+	$('#show-citra-ready-file').off('click');
+	$("#ciaslist").html("");
 });
 
 $("#config-save").click(function(e){

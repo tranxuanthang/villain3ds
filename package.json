@@ -1,6 +1,6 @@
 {
   "name": "Villain3DS",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Download 3DS games to your PC as .cia files.",
   "main": "main.js",
   "scripts": {
@@ -19,6 +19,7 @@
     "dialog": "^0.3.1",
     "fs": "0.0.1-security",
     "fs-extra": "^4.0.3",
+    "glob": "^7.1.2",
     "moment": "^2.22.2",
     "mt-files-downloader": "git+https://github.com/tranxuanthang/node-mt-files-downloader.git",
     "mustache": "^2.3.0",

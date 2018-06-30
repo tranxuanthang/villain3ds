@@ -126,9 +126,9 @@ a[href^="ftp://"] {
 
 .input, .textarea {
     background-color: #1d2a36;
-    border-color: #243749;
+    border-color: #1d2a36;
     color: #fff;
-    box-shadow: inset 0 1px 2px rgba(10,10,10,.1);
+    box-shadow: none;
 }
 .input:hover {
     background-color: #1d2a36;
@@ -177,6 +177,13 @@ a[href^="ftp://"] {
     padding: 0.4rem;
 }
 
+.mcc-note {
+    margin: 0.6rem 0 0.6rem 0;
+    border: 1px solid #122130;
+    border-radius: 5px;
+    background-color: #1b2733;
+    padding: 0.4rem;
+}
 .mcc-result{
     margin: 0.6rem 0 0.6rem 0;
     border: 1px solid #122130;
