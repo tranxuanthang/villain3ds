@@ -525,6 +525,7 @@ function decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTi
             resolve();
         });
         writeDecryptedContentFile.on('error', function (error) {
+            console.log('dkm')
             reject(error);
         });
     });
@@ -534,6 +535,7 @@ async function verifyContent(contentPath, contentHash, titleId, cID, contentInde
     const decryptedPath = path.join(os.tmpdir(),"Villain3DS", titleId, `decrypted.${contentIndex}.${cID}.tmp`);
     fs.ensureDirSync(path.join(os.tmpdir(),"Villain3DS", titleId));
     await decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTitleKey, decryptedPath);
+    
     const hashResult = await calcFileHashWithSha256(decryptedPath);
     console.log("cIndex: ", contentIndex, hashResult, "content hash: ", contentHash);
     if(hashResult == contentHash) {
@@ -650,7 +652,8 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                         dl.destroy();
                         reject("error_destroyed_by_user");
                     }
-                })
+                });
+                /*
                 .catch(error => {
                     progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
                     progressElement.html(`Content #${num} is downloaded, but something goes wrong and Villain3DS can't check the hash of this file (Error: ${error}).`);
@@ -658,8 +661,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                     hideButtons();
                     dl.destroy();
                     reject("error_destroyed_by_user");
-                });
-                
+                });*/
             } else if(dl.status == -1) {
                 progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
                 progressElement.text('Content #'+ num +' is failed to download ('+ dl.error+').');
