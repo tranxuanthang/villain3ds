@@ -647,9 +647,17 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                         progressElement.html(`Content #${num} is downloaded, but has the wrong SHA-256 hash!! Click "play" button to retry.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
                         disableAllButton();
                         hideButtons();
-                        //dl.destroy();
+                        dl.destroy();
                         reject("error_destroyed_by_user");
                     }
+                })
+                .catch(error => {
+                    progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
+                    progressElement.html(`Content #${num} is downloaded, but something goes wrong and Villain3DS can't check the hash of this file (Error: ${error}).`);
+                    disableAllButton();
+                    hideButtons();
+                    dl.destroy();
+                    reject("error_destroyed_by_user");
                 });
                 
             } else if(dl.status == -1) {
