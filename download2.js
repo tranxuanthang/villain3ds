@@ -644,10 +644,10 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                         resolve();
                     } else {
                         progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
-                        progressElement.html(`Content #${num} is downloaded, but has the wrong SHA-256 hash!!.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
+                        progressElement.html(`Content #${num} is downloaded, but has the wrong SHA-256 hash!! Click "play" button to retry.<br>Content hash from tmd is: <br>${func.hexForHuman(contentHash)}.<br>Caculated hash is: <br>${func.hexForHuman(hashVerify.calculatedHash)}.`);
                         disableAllButton();
                         hideButtons();
-                        dl.destroy();
+                        //dl.destroy();
                         reject("error_destroyed_by_user");
                     }
                 });
@@ -675,7 +675,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                 clearInterval(timer);
                 timer = null;
             }
-        }, 200);
+        }, 350);
     });
     
 }
