@@ -261,7 +261,10 @@ async function addNewDownload(event,receivedData){
         /* Check invalid titlekey */
         if(typeof titleKey === 'undefined'){
             downloadContinue = false;
-            $('#'+titleData.titleID+' .alert').text('Could not find the titlekey for the title you\'re trying to download. Please try deleting enctitlekeys.bin file in your base directory.').show();
+            if (!fs.existsSync(etkBinDir)) {
+                fs.unlinkSync(etkBinDir);
+            }
+            $('#'+titleData.titleID+' .alert').text('Could not find the titlekey for the title you\'re trying to download. Please try deleting enctitlekeys.bin file in your base directory, or go to About, then Troubleshooting, and click Delete encTitleKeys.bin file, and try downloading again.').show();
         } else if(titleKey.length!=32){
             downloadContinue = false;
             $('#'+titleData.titleID+' .alert').text('The titlekey has invalid length. Please try deleting enctitlekeys.bin file in your base directory.').show();
@@ -519,21 +522,30 @@ function decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTi
 
         /* Start decrypting */
         const decrypt = crypto.createDecipheriv('aes-128-cbc', decryptedTitleKeyUint8Array, ivFromContentIndex);
-        decrypt.setAutoPadding(false);
-        readContentFile.pipe(decrypt).pipe(writeDecryptedContentFile);
-        writeDecryptedContentFile.on('finish', function () {
-            resolve();
-        });
-        writeDecryptedContentFile.on('error', function (error) {
-            console.log('dkm')
-            reject(error);
-        });
+        
+        let stats = fs.statSync(contentPath);
+        let fileSizeInBytes = stats["size"];
+        if(fileSizeInBytes % 16 !== 0) {
+            reject("filesize_is_not_multiple_of_16");
+        } else {
+            decrypt.setAutoPadding(false);
+        
+            readContentFile.pipe(decrypt).pipe(writeDecryptedContentFile);
+            writeDecryptedContentFile.on('finish', function () {
+                resolve();
+            });
+            writeDecryptedContentFile.on('error', function (error) {
+                console.log('dkm')
+                reject(error);
+            });
+        }
     });
 }
 
 async function verifyContent(contentPath, contentHash, titleId, cID, contentIndex, decryptedTitleKey) {
     const decryptedPath = path.join(os.tmpdir(),"Villain3DS", titleId, `decrypted.${contentIndex}.${cID}.tmp`);
     fs.ensureDirSync(path.join(os.tmpdir(),"Villain3DS", titleId));
+    
     await decryptContentFile(contentPath, titleId, cID, contentIndex, decryptedTitleKey, decryptedPath);
     
     const hashResult = await calcFileHashWithSha256(decryptedPath);
@@ -594,7 +606,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
         });
         
         dl.setOptions({
-            threadsCount: 6, // Default: 2, Set the total number of download threads
+            threadsCount: 2, // Default: 2, Set the total number of download threads
             method: 'GET', 	 // Default: GET, HTTP method
             port: 80, 	     // Default: 80, HTTP port
             timeout: 5000,   // Default: 5000, If no data is received, the download times out (milliseconds)
@@ -632,6 +644,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
             } else if(dl.status == 3) {
                 progressBar.val(100).removeClass('is-primary is-warning is-danger is-success').addClass('is-success');
                 progressElement.html(`Content #${num} is downloaded. Decrypting & calculating hash...`);
+                
                 verifyContent(contentPath, contentHash, titleId, cID, contentIndex, decryptedTitleKey)
                 .then(hashVerify => {
                     if(hashVerify.result == true) {
@@ -652,8 +665,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                         dl.destroy();
                         reject("error_destroyed_by_user");
                     }
-                });
-                /*
+                })
                 .catch(error => {
                     progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
                     progressElement.html(`Content #${num} is downloaded, but something goes wrong and Villain3DS can't check the hash of this file (Error: ${error}).`);
@@ -661,7 +673,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                     hideButtons();
                     dl.destroy();
                     reject("error_destroyed_by_user");
-                });*/
+                });
             } else if(dl.status == -1) {
                 progressBar.removeClass('is-primary is-warning is-danger is-success').addClass('is-danger');
                 progressElement.text('Content #'+ num +' is failed to download ('+ dl.error+').');
@@ -685,7 +697,7 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                 clearInterval(timer);
                 timer = null;
             }
-        }, 350);
+        }, 200);
     });
     
 }
