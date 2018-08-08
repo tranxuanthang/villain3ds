@@ -65,8 +65,8 @@ const newTitleTemplate =
 
 const newContentTemplate =
     '<div class="title-content" id="{{content-id}}">'
-    + '<div class="level cdlevel"><div class="content-title allow-select allow-drag level-left cdlevel-left">Content: {{content-id}}</div><div class="level-right cdlevel-right"><div class="download-control level-item"></div></div></div>'
-    + '<progress class="progress is-primary is-small" value="0" max="100"></progress>'
+    + '<div class="level cdlevel"><div class="content-title allow-select allow-drag level-left cdlevel-left">Content: {{content-id}}</div><div class="level-right cdlevel-right hidden"><div class="download-control level-item"></div></div></div>'
+    + '<progress class="progress is-primary is-small hidden" value="0" max="100"></progress>'
     + '<div class="content-status allow-select allow-drag">{{content-progress}}</div>'
     + '</div>';
 
@@ -342,13 +342,18 @@ async function addNewDownload(receivedData) {
 
         /* Run download 2 contents in parallel at one time */
         try {
+            /*
             for (let i = 0; i <= contentTask.length - 1; i += 2) {
                 if (i + 1 == contentTask.length) {
                     await contentTask[i]();
                 } else {
                     await Promise.all([contentTask[i](), contentTask[i + 1]()]);
                 }
+            }*/
+            for (let i = 0; i <= contentTask.length - 1; i ++) {
+                await contentTask[i]();
             }
+
             makeCia(titleData.titleID, dldir, path.join(ciadir, tempFileName), path.join(ciadir, fileName), tempFileName, fileName, mainContentId);
         }
         catch (error) {
@@ -523,21 +528,21 @@ function dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount,
                 $('#' + titleId + ' #' + cID + ' .download-control').show();
                 disableAllButton();
                 $('#' + titleId + ' #' + cID).children().off();
-                /*if(titlesQueue.length == 1) {*/
-                $('#' + titleId + ' #' + cID + ' .download-control').children('.download-play').removeAttr('disabled');
-                $('#' + titleId + ' #' + cID + ' .download-play').on('click', function () {
-                    $('#' + titleId + ' #' + cID + ' .download-play').off('click');
-                    dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey)
-                        .then(function () {
-                            resolve();
-                        })
-                    /*.catch(error => {
-                        reject(error);
-                    });*/
-                });
-                /*} else {
+                if(titlesQueue.length == 1) {
+                    $('#' + titleId + ' #' + cID + ' .download-control').children('.download-play').removeAttr('disabled');
+                    $('#' + titleId + ' #' + cID + ' .download-play').on('click', function () {
+                        $('#' + titleId + ' #' + cID + ' .download-play').off('click');
+                        dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey)
+                            .then(function () {
+                                resolve();
+                            })
+                        .catch(error => {
+                            reject(error);
+                        });
+                    });
+                } else {
                     reject('destroyed_for_next_title_in_queue');
-                }*/
+                }
             });
     });
 }
@@ -609,8 +614,9 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
         let num = cID;
         let progressElement = $('#' + titleId + ' #' + cID + ' .content-status');
         let progressBar = $('#' + titleId + ' #' + cID + ' .progress');
-        let downloadControl = $('#' + titleId + ' #' + cID + ' .download-control');
-
+        let downloadControl = $('#' + titleId + ' #' + cID + ' .level-right');
+        progressBar.removeClass('hidden');
+        downloadControl.removeClass('hidden');
         if (fs.existsSync(contentPath + '.mtd') && redownload == false && fs.statSync(contentPath + '.mtd').size > 0) {
             console.log('found mtd file')
             var dl = downloader.resumeDownload(contentPath);
@@ -625,14 +631,14 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
         });
 
         dl.setOptions({
-            threadsCount: 2, // Default: 2, Set the total number of download threads
+            threadsCount: 6, // Default: 2, Set the total number of download threads
             method: 'GET', 	 // Default: GET, HTTP method
             port: 80, 	     // Default: 80, HTTP port
             timeout: 5000,   // Default: 5000, If no data is received, the download times out (milliseconds)
             range: '0-100',  // Default: 0-100, Control the part of file that needs to be downloaded.
         });
 
-        dl.on('error', function () {
+        dl.on('error', function (error) {
             console.log(error);
         });
 
