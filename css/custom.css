@@ -242,3 +242,17 @@ a[href^="ftp://"] {
         width: 960px;
     }
 }
+
+.queue-item {
+    padding: 4px 4px 8px 0;
+}
+
+.queue-downloading {
+    font-size: normal;
+    font-style: bold;
+}
+
+.queue-waiting {
+    font-size: small;
+    font-style: italic;
+}

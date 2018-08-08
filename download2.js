@@ -72,7 +72,7 @@ const newContentTemplate =
 
 const tk = 0x140;
 
-var titleQueue = new Array();
+var titlesQueue = new Array();
 var parsedEtkBin = new Object();
 
 /* Get base directory from config file */
@@ -216,11 +216,41 @@ async function etkBinHandler(doCheck = false){
     }
 }
 
+function updateQueueOnDOM() {
+    let renderQueue;
+    if(titlesQueue.length == 0) {
+        renderQueue = 'Queue is empty.';
+    } else {
+        renderQueue = titlesQueue.map(title => {
+            if(title.status == 'downloading') {
+                return `<li id="queue-${title.titleID}" class="queue-item queue-downloading">${title.name} (${title.region})</li>`;
+            } else if(title.status == 'waiting') {
+                return `<li id="queue-${title.titleID}" class="queue-item queue-waiting">${title.name} (${title.region})</li>`;
+            }
+        })
+        .join("");
+    }
+    document.getElementById("download-queue-list").innerHTML = renderQueue;
+    document.getElementById("queue-card").classList.remove("hidden");
+}
+
 function checkRequirement(){
     if(mccCheck==true && etkBinCheck==true){
         $("#check-requirement").text('All requirements are fulfilled. Waiting for information from main window...');
         ipcRenderer.send('dlprocess-ready');
-        ipcRenderer.once('download-title' , addNewDownload);
+        ipcRenderer.on('download-title', function(event, receivedData) {
+            const alreadyInQueue = titlesQueue.filter(value => value.titleID == receivedData.titleID);
+            if(alreadyInQueue.length == 0) {
+                receivedData.status = 'waiting';
+                titlesQueue.push(receivedData);
+                console.log("queue now is", titlesQueue);
+                if(titlesQueue.length == 1) {
+                    titlesQueue[0].status = 'downloading';
+                    addNewDownload(titlesQueue[0]);
+                }
+                updateQueueOnDOM();
+            }
+        });
     } else {
         $("#check-requirement").show().html('Some requirements can\'t be acquired. The application will not continue until those requirements is fulfilled.');
     }
@@ -232,7 +262,7 @@ async function getRequirement(){
     checkRequirement();
 }
 
-async function addNewDownload(event,receivedData){
+async function addNewDownload(receivedData){
     let titleData = receivedData;
     var dldir = path.join(rawdir,titleData.titleID);
     let tempFileName = sanitizefn(titleData.titleID+'.cia');
@@ -321,9 +351,16 @@ async function addNewDownload(event,receivedData){
             }
             makeCia(titleData.titleID, dldir, path.join(ciadir,tempFileName), path.join(ciadir,fileName), tempFileName, fileName, mainContentId);
         }
-        catch(error){
+        catch(error) {
             $('#'+titleData.titleID+' .alert').html('One or more downloads did not completed successfully :(').show();
         }
+        
+        titlesQueue.shift();
+        if(titlesQueue.length > 0) {
+            titlesQueue[0].status = 'downloading';
+            addNewDownload(titlesQueue[0]);
+        }
+        updateQueueOnDOM();
     }
 }
 
@@ -481,17 +518,26 @@ function dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount,
         .then(function(){
             resolve();
         })
-        .catch(function(error){
+        .catch(function(error) {
             if(error == 'error_destroyed_by_user') redownload = true;
             $('#'+titleId+' #'+cID+' .download-control').show();
             disableAllButton();
-            $('#'+titleId+' #'+cID+' .download-control').children('.download-play').removeAttr('disabled');
-            $('#'+titleId+' #'+cID+' .download-play').on('click',function(){
-                dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey)
-                .then(function(){
-                    resolve();
+            $('#'+titleId+' #'+cID).children().off();
+            /*if(titlesQueue.length == 1) {*/
+                $('#'+titleId+' #'+cID+' .download-control').children('.download-play').removeAttr('disabled');
+                $('#'+titleId+' #'+cID+' .download-play').on('click',function() {
+                    $('#'+titleId+' #'+cID+' .download-play').off('click');
+                    dlTaskHandler(contentUrl, contentPath, cID, contentIndex, contentCount, dldir, titleId, redownload, contentHash, decryptedTitleKey)
+                    .then(function(){
+                        resolve();
+                    })
+                    /*.catch(error => {
+                        reject(error);
+                    });*/
                 });
-            });
+            /*} else {
+                reject('destroyed_for_next_title_in_queue');
+            }*/
         });
     });
 }
@@ -565,21 +611,21 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
         let progressBar = $('#'+titleId+' #'+cID+' .progress');
         let downloadControl = $('#'+titleId+' #'+cID+' .download-control');
         
-        if(fs.existsSync(contentPath+'.mtd') && redownload == false && fs.statSync(contentPath+'.mtd').size>0){
+        if(fs.existsSync(contentPath+'.mtd') && redownload == false && fs.statSync(contentPath+'.mtd').size>0) {
             console.log('found mtd file')
             var dl = downloader.resumeDownload(contentPath);
         } else {
             console.log('NOT found mtd file')
             var dl = downloader.download(contentUrl, contentPath);
         }
-        if(fs.existsSync(contentPath)){
+        if(fs.existsSync(contentPath)) {
             dl.status = 3;
             dl.alreadydownloaded = true;
         } else {
             dl.start();
         }
-        $('#'+titleId+' #'+cID+' .download-play').on('click',function(){
-            if(fs.existsSync(contentPath+'.mtd') && !fs.existsSync(contentPath) && fs.statSync(contentPath+'.mtd').size>0){
+        $('#'+titleId+' #'+cID+' .download-play').on('click', function() {
+            if(fs.existsSync(contentPath+'.mtd') && !fs.existsSync(contentPath) && fs.statSync(contentPath+'.mtd').size>0) {
                 dl.resume();
             } else if(fs.existsSync(contentPath) && !fs.existsSync(contentPath+'.mtd') && fs.statSync(contentPath).size>0) {
                 dl.setStatus(3);
@@ -587,17 +633,17 @@ function createContentDlTask(contentUrl, contentPath, cID, contentIndex, content
                 dl.resume();
             }
         });
-        $('#'+titleId+' #'+cID+' .download-pause').on('click',function(){
+        $('#'+titleId+' #'+cID+' .download-pause').on('click',function() {
             dl.stop();
         });
-        $('#'+titleId+' #'+cID+' .download-destroy').on('click',async function(){
+        $('#'+titleId+' #'+cID+' .download-destroy').on('click',async function() {
             dl.destroy();
         });
 
-        function disableAllButton(){
+        function disableAllButton() {
             $('#'+titleId+' #'+cID+' .download-control').children('.download-play, .download-pause, .download-destroy').attr('disabled','disabled');
         }
-        function hideButtons(){
+        function hideButtons() {
             $('#'+titleId+' #'+cID+' .download-control').hide();
         }
         dl.setRetryOptions({

@@ -1,6 +1,6 @@
 {
   "name": "villain3ds",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Download 3DS games to your PC as .cia files.",
   "main": "main.js",
   "scripts": {
