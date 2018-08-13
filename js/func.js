@@ -28,6 +28,11 @@ exports.simpleDownload = function simpleDownload(simpleUrl,simplePath){
             .on('error', function(error) {
                 reject(error);
             })
+            .on('response', function(res) {
+                if(res.statusCode != 200) {
+                    reject(`error_status_code_is_${res.statusCode}`);
+                }
+            })
             .pipe(fs.createWriteStream(simplePath, {'flags': 'w'}));
 
             req.on('finish',function(){
