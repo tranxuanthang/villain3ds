@@ -291,7 +291,7 @@ async function addNewDownload(receivedData) {
         /* Check invalid titlekey */
         if (typeof titleKey === 'undefined') {
             downloadContinue = false;
-            if (!fs.existsSync(etkBinDir)) {
+            if (fs.existsSync(etkBinDir)) {
                 fs.unlinkSync(etkBinDir);
             }
             $('#' + titleData.titleID + ' .alert').text('Could not find the titlekey for the title you\'re trying to download. Please try deleting enctitlekeys.bin file in your base directory, or go to About, then Troubleshooting, and click Delete encTitleKeys.bin file, and try downloading again.').show();
