@@ -2,6 +2,10 @@
 
 Download 3DS games to your PC as .cia files.
 
+## Important Note
+
+Nintendo added new security measures to their content server which prohibit CDN-based downloads with tools like freeShop or Villian3DS. In other words: **You can't download games with these tools anymore.** We're sorry.
+
 ## To Use
 
 To clone and run this repository you'll need [Git](https://git-scm.com) and [Node.js](https://nodejs.org/en/download/) (which comes with [npm](http://npmjs.com)) installed on your computer. From your command line:
